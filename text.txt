@@ -1,0 +1,18 @@
+for (const section of db_data){
+    for(const product of section.products){
+      await Firebase.createDocWithName('products',product.name,{
+        section : section.id,
+        ...product,
+        opening : 0,
+        sales_target : 0,
+        production_target : 0,
+        data : Array.from({ length: 31 }, (_, i) => ({
+            date: i + 1,
+            batch: 0,
+            carton : 0,
+            manpower : 0
+          })),
+        infos : section.infos
+      })
+    }
+  }
