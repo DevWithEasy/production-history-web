@@ -10,9 +10,43 @@ for (const section of db_data){
             date: i + 1,
             batch: 0,
             carton : 0,
-            manpower : 0
           })),
         infos : section.infos
       })
+    }
+  }
+
+
+  
+  async function deleteManpowerField() {
+    for(const product of products){
+      const docRef = doc(db, "products", product.id);
+
+  try {
+    // ১. প্রথমে ডকুমেন্টটি গেট করুন
+    const snap = await getDoc(docRef);
+
+    if (snap.exists()) {
+      const currentData = snap.data();
+      const oldArray = currentData.data || [];
+
+      // ২. map ব্যবহার করে 'manpower' ফিল্ডটি বাদ দিয়ে নতুন অ্যারে তৈরি করুন
+      const updatedArray = oldArray.map((item: any) => {
+        const { manpower, ...rest } = item; // manpower বাদ দিয়ে বাকি অংশ আলাদা করা
+        return rest;
+      });
+
+      // ৩. আপডেট করা অ্যারেটি ফায়ারবেসে পাঠিয়ে দিন
+      await updateDoc(docRef, {
+        data: updatedArray
+      });
+
+      console.log("Manpower field deleted successfully!");
+    } else {
+      console.log("Document does not exist!");
+    }
+  } catch (error) {
+    console.error("Error updating document:", error);
+  }
     }
   }

@@ -1,7 +1,9 @@
 "use client";
 
 import Firebase from "@/utils/firebase";
+import { db } from "@/utils/firebaseConfig";
 import { getPeriod, setPeriod } from "@/utils/storage";
+import { doc, getDoc, updateDoc } from "firebase/firestore";
 import { useEffect, useState } from "react";
 
 interface Product {
@@ -50,10 +52,7 @@ export default function App() {
 
       const monthName = months[month - 1].name;
 
-      const exists = await Firebase.isProductsCollectionExists(
-        year,
-        monthName
-      );
+      const exists = await Firebase.isProductsCollectionExists(year, monthName);
 
       if (!exists) {
         setShowWarning(true);
@@ -61,10 +60,7 @@ export default function App() {
         return;
       }
 
-      const data = await Firebase.getProductsByPeriod<Product>(
-        year,
-        monthName
-      );
+      const data = await Firebase.getProductsByPeriod<Product>(year, monthName);
 
       setProducts(data);
       setLoading(false);
@@ -110,14 +106,16 @@ export default function App() {
       </div>
 
       <div className="text-sm text-gray-600">
-        Selected: <strong>{month}/{year}</strong>
+        Selected:{" "}
+        <strong>
+          {month}/{year}
+        </strong>
       </div>
 
       {/* Loading */}
       {loading && <p className="text-sm">Loading...</p>}
-
       {/* Products */}
-      {!loading && products.length > 0 && (
+      {/* {!loading && products.length > 0 && (
         <div className="border rounded p-3 space-y-2">
           <h3 className="font-medium">Products</h3>
           {products.map((p) => (
@@ -126,7 +124,7 @@ export default function App() {
             </div>
           ))}
         </div>
-      )}
+      )} */}
 
       {/* Warning Modal */}
       {showWarning && (

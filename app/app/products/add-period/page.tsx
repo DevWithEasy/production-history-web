@@ -5,6 +5,11 @@ import Firebase from "@/utils/firebase";
 import { getPeriod, setPeriod } from "@/utils/storage";
 import { useEffect, useState } from "react";
 
+type Section = {
+  id: string;
+  name: string;
+};
+
 export default function CreatePeriod() {
   const years = Array.from({ length: 5 }, (_, i) => 2026 + i);
 
@@ -23,7 +28,6 @@ export default function CreatePeriod() {
     { name: "December", value: 12 },
   ];
 
-  // ✅ LAZY INIT (hydration-safe, no cascade)
   const [period, setPeriodState] = useState(() => {
     if (typeof window === "undefined") {
       return { year: years[0], month: 1 };
@@ -35,7 +39,8 @@ export default function CreatePeriod() {
 
   const { year, month } = period;
 
-  // ✅ single effect, single responsibility
+  const [sections, setSections] = useState<Section[]>([]);
+
   useEffect(() => {
     setPeriod(period);
 
@@ -44,13 +49,17 @@ export default function CreatePeriod() {
       const exists = await Firebase.isProductsCollectionExists(year, monthName);
       setIsPeriodExist(exists);
     };
-
     checkPeriod();
+    Firebase.getDocuments<Section>("sections")
+      .then(setSections)
+      .catch(console.error);
   }, [year, month]);
 
   async function createPeriod() {
-    const products: Product[] = await Firebase.getDocuments("products");
     const monthName = months[month - 1].name;
+
+    /* ---------- 1. Copy products ---------- */
+    const products = await Firebase.getDocuments<Product>("products");
 
     for (const product of products) {
       await Firebase.createDocWithName(
@@ -60,10 +69,18 @@ export default function CreatePeriod() {
       );
     }
 
+    /* ---------- 2. Build dynamic section fields ---------- */
+    const sectionFields = sections.reduce((acc, section) => {
+      acc[section.id] = 0;
+      return acc;
+    }, {} as Record<string, number>);
+
+    /* ---------- 3. Create manpower month ---------- */
     await Firebase.createDocWithName(`manpowers/${year}/months`, monthName, {
       data: Array.from({ length: 31 }, (_, i) => ({
         date: i + 1,
-        manpower: 0,
+        ...sectionFields,
+        total_manpower: 0,
       })),
     });
 

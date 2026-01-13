@@ -1,6 +1,5 @@
 "use client";
 
-import { ManPower } from "@/types/Manpower.Types";
 import { Product } from "@/types/Product.Types";
 import Firebase from "@/utils/firebase";
 import { useEffect, useState, useMemo, useCallback } from "react";
@@ -19,11 +18,12 @@ import {
   RefreshCw,
   Database,
   BarChart,
-  TrendingDown,
-  Minus,
   ChevronUp,
   ChevronDown,
-  Activity
+  Minus,
+  Activity,
+  Layers,
+  FolderOpen
 } from "lucide-react";
 
 type ProductWithId = Product & { id: string };
@@ -43,12 +43,23 @@ type DailyTrendData = {
   batch: number;
 };
 
+type ManPowerData = {
+  date: number;
+  [key: string]: number; // Dynamic section keys
+  total_manpower: number;
+};
+
+type ManPower = {
+  data: ManPowerData[];
+};
+
 type MonthlyComparison = {
   month: string;
   year: number;
   totalValue: number;
   totalBatch: number;
   totalCarton: number;
+  sectionManpower: Record<string, number>;
   totalManpower: number;
   sectionData: SectionData[];
   productivity: {
@@ -102,6 +113,17 @@ export default function Dashboard() {
     return { icon: Minus, color: "text-yellow-600", bgColor: "bg-yellow-50" };
   };
 
+  // Format section name for display
+  const formatSectionName = useCallback((sectionName: string) => {
+    if (!sectionName) return "Unknown";
+    
+    // Remove underscores and capitalize first letter of each word
+    return sectionName
+      .split('_')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ');
+  }, []);
+
   // Load data from Firebase
   useEffect(() => {
     const loadData = async () => {
@@ -112,7 +134,7 @@ export default function Dashboard() {
         console.log("Loading current month data:", currentYear, currentMonthName);
         console.log("Loading previous month data:", prevMonthInfo.year, prevMonthName);
 
-        // Load current month data
+        // Load current month products
         const currentProductsData = await Firebase.getProductsByPeriod<Product>(
           currentYear,
           currentMonthName
@@ -120,12 +142,13 @@ export default function Dashboard() {
         
         const currentProductsWithId: ProductWithId[] = currentProductsData.map((product: any) => ({
           ...product,
-          id: product.id || product.code || `product-${Math.random()}`
+          id: product.id || product.code || `product-${Math.random()}`,
+          section: product.section?.toLowerCase() || 'uncategorized'
         }));
         
         setProducts(currentProductsWithId);
 
-        // Load previous month data
+        // Load previous month products
         const prevProductsData = await Firebase.getProductsByPeriod<Product>(
           prevMonthInfo.year,
           prevMonthName
@@ -133,18 +156,20 @@ export default function Dashboard() {
         
         const prevProductsWithId: ProductWithId[] = prevProductsData.map((product: any) => ({
           ...product,
-          id: product.id || product.code || `product-${Math.random()}-prev`
+          id: product.id || product.code || `product-${Math.random()}-prev`,
+          section: product.section?.toLowerCase() || 'uncategorized'
         }));
         
         setPrevMonthProducts(prevProductsWithId);
 
-        // Load manpower data
+        // Load manpower data (dynamic structure)
         try {
           const currentManpowerData = await Firebase.getManpowerByPeriod<ManPower>(
             currentYear,
             currentMonthName
           );
           setManpower(currentManpowerData);
+          console.log("Current manpower data loaded:", currentManpowerData);
         } catch (manpowerError) {
           console.warn("Current manpower data not available:", manpowerError);
           setManpower(null);
@@ -156,6 +181,7 @@ export default function Dashboard() {
             prevMonthName
           );
           setPrevMonthManpower(prevManpowerData);
+          console.log("Previous manpower data loaded:", prevManpowerData);
         } catch (prevManpowerError) {
           console.warn("Previous manpower data not available:", prevManpowerError);
           setPrevMonthManpower(null);
@@ -176,13 +202,99 @@ export default function Dashboard() {
     loadData();
   }, [currentMonthName, currentYear, prevMonthName, prevMonthInfo.year, refreshKey]);
 
+  // Extract all unique sections from products
+  const extractAllSections = useCallback((productsData: ProductWithId[]) => {
+    const sections = new Set<string>();
+    productsData.forEach(product => {
+      if (product.section) {
+        sections.add(product.section.toLowerCase());
+      }
+    });
+    return Array.from(sections);
+  }, []);
+
+  // Get all available sections from current and previous month
+  const allSections = useMemo(() => {
+    const sections = new Set<string>();
+    
+    // Add sections from current month products
+    products.forEach(product => {
+      if (product.section) {
+        sections.add(product.section.toLowerCase());
+      }
+    });
+    
+    // Add sections from previous month products
+    prevMonthProducts.forEach(product => {
+      if (product.section) {
+        sections.add(product.section.toLowerCase());
+      }
+    });
+    
+    // Add sections from manpower data (if available)
+    if (manpower?.data && manpower.data.length > 0) {
+      const firstDay = manpower.data[0];
+      Object.keys(firstDay).forEach(key => {
+        if (key !== 'date' && key !== 'total_manpower') {
+          sections.add(key.toLowerCase());
+        }
+      });
+    }
+    
+    if (prevMonthManpower?.data && prevMonthManpower.data.length > 0) {
+      const firstDay = prevMonthManpower.data[0];
+      Object.keys(firstDay).forEach(key => {
+        if (key !== 'date' && key !== 'total_manpower') {
+          sections.add(key.toLowerCase());
+        }
+      });
+    }
+    
+    return Array.from(sections).sort();
+  }, [products, prevMonthProducts, manpower, prevMonthManpower]);
+
+  // Calculate section-wise manpower from dynamic structure
+  const calculateSectionManpower = useCallback((manpowerData: ManPower | null, allSectionsList: string[]) => {
+    const sectionManpower: Record<string, number> = {};
+    
+    // Initialize all sections with 0
+    allSectionsList.forEach(section => {
+      sectionManpower[section] = 0;
+    });
+    
+    if (!manpowerData || !manpowerData.data) {
+      return { sectionManpower, total_manpower: 0 };
+    }
+
+    let totalManpower = 0;
+
+    manpowerData.data.forEach(day => {
+      // Sum all section manpower
+      Object.keys(day).forEach(key => {
+        if (key === 'total_manpower') {
+          totalManpower += day[key] || 0;
+        } else if (key !== 'date') {
+          const sectionKey = key.toLowerCase();
+          if (sectionManpower[sectionKey] !== undefined) {
+            sectionManpower[sectionKey] += day[key] || 0;
+          } else {
+            // If new section found in manpower data, add it
+            sectionManpower[sectionKey] = day[key] || 0;
+          }
+        }
+      });
+    });
+
+    return { sectionManpower, total_manpower: totalManpower };
+  }, []);
+
   // Calculate statistics for current month
   const currentMonthStats = useMemo(() => {
     const stats = {
       totalValue: 0,
       totalBatch: 0,
       totalCarton: 0,
-      totalManpower: 0,
+      totalManpowerFromProducts: 0,
       uniqueWorkingDays: new Set<number>(),
       totalProductsCount: 0
     };
@@ -193,9 +305,11 @@ export default function Dashboard() {
     products.forEach(product => {
       stats.totalProductsCount++;
 
-      if (!sections[product.section]) {
-        sections[product.section] = {
-          name: product.section,
+      const sectionName = product.section?.toLowerCase() || 'uncategorized';
+      
+      if (!sections[sectionName]) {
+        sections[sectionName] = {
+          name: sectionName,
           totalValue: 0,
           totalBatch: 0,
           totalCarton: 0,
@@ -204,7 +318,7 @@ export default function Dashboard() {
         };
       }
 
-      sections[product.section].products.push(product);
+      sections[sectionName].products.push(product);
 
       product.data.forEach(day => {
         const productionValue = day.carton * product.price;
@@ -212,16 +326,16 @@ export default function Dashboard() {
         stats.totalValue += productionValue;
         stats.totalBatch += day.batch;
         stats.totalCarton += day.carton;
-        stats.totalManpower += day.manpower;
+        stats.totalManpowerFromProducts += day.manpower;
         
         if (day.manpower > 0) {
           stats.uniqueWorkingDays.add(day.date);
         }
 
-        sections[product.section].totalValue += productionValue;
-        sections[product.section].totalBatch += day.batch;
-        sections[product.section].totalCarton += day.carton;
-        sections[product.section].totalManpower += day.manpower;
+        sections[sectionName].totalValue += productionValue;
+        sections[sectionName].totalBatch += day.batch;
+        sections[sectionName].totalCarton += day.carton;
+        sections[sectionName].totalManpower += day.manpower;
 
         if (!dailyData[day.date]) {
           dailyData[day.date] = {
@@ -243,27 +357,24 @@ export default function Dashboard() {
     const dailyTrendData: DailyTrendData[] = Object.values(dailyData)
       .sort((a, b) => a.date - b.date);
 
-    const valuePerManpower = stats.totalManpower > 0 ? stats.totalValue / stats.totalManpower : 0;
-    const cartonPerManpower = stats.totalManpower > 0 ? stats.totalCarton / stats.totalManpower : 0;
-
-    // Factory manpower from separate manpower data
-    let factoryManpower = 0;
-    if (manpower && manpower.data) {
-      factoryManpower = manpower.data.reduce((sum, day) => sum + (day.manpower || 0), 0);
-    }
+    // Calculate manpower from new structure
+    const { sectionManpower, total_manpower } = calculateSectionManpower(manpower, allSections);
+    
+    const valuePerManpower = total_manpower > 0 ? stats.totalValue / total_manpower : 0;
+    const cartonPerManpower = total_manpower > 0 ? stats.totalCarton / total_manpower : 0;
 
     return {
       stats: {
         ...stats,
-        totalManpower: stats.totalManpower,
-        factoryManpower
+        sectionManpower,
+        totalManpowerFromData: total_manpower
       },
       sectionData: sectionArray,
       topSections: sectionArray.slice(0, 3),
       dailyTrend: dailyTrendData,
       productivity: { valuePerManpower, cartonPerManpower }
     };
-  }, [products, manpower]);
+  }, [products, manpower, allSections, calculateSectionManpower]);
 
   // Calculate statistics for previous month
   const previousMonthStats = useMemo(() => {
@@ -271,7 +382,7 @@ export default function Dashboard() {
       totalValue: 0,
       totalBatch: 0,
       totalCarton: 0,
-      totalManpower: 0,
+      totalManpowerFromProducts: 0,
       uniqueWorkingDays: new Set<number>(),
       totalProductsCount: 0
     };
@@ -281,9 +392,11 @@ export default function Dashboard() {
     prevMonthProducts.forEach(product => {
       stats.totalProductsCount++;
 
-      if (!sections[product.section]) {
-        sections[product.section] = {
-          name: product.section,
+      const sectionName = product.section?.toLowerCase() || 'uncategorized';
+      
+      if (!sections[sectionName]) {
+        sections[sectionName] = {
+          name: sectionName,
           totalValue: 0,
           totalBatch: 0,
           totalCarton: 0,
@@ -292,7 +405,7 @@ export default function Dashboard() {
         };
       }
 
-      sections[product.section].products.push(product);
+      sections[sectionName].products.push(product);
 
       product.data.forEach(day => {
         const productionValue = day.carton * product.price;
@@ -300,41 +413,38 @@ export default function Dashboard() {
         stats.totalValue += productionValue;
         stats.totalBatch += day.batch;
         stats.totalCarton += day.carton;
-        stats.totalManpower += day.manpower;
+        stats.totalManpowerFromProducts += day.manpower;
         
         if (day.manpower > 0) {
           stats.uniqueWorkingDays.add(day.date);
         }
 
-        sections[product.section].totalValue += productionValue;
-        sections[product.section].totalBatch += day.batch;
-        sections[product.section].totalCarton += day.carton;
-        sections[product.section].totalManpower += day.manpower;
+        sections[sectionName].totalValue += productionValue;
+        sections[sectionName].totalBatch += day.batch;
+        sections[sectionName].totalCarton += day.carton;
+        sections[sectionName].totalManpower += day.manpower;
       });
     });
 
     const sectionArray = Object.values(sections);
     sectionArray.sort((a, b) => b.totalValue - a.totalValue);
 
-    const valuePerManpower = stats.totalManpower > 0 ? stats.totalValue / stats.totalManpower : 0;
-    const cartonPerManpower = stats.totalManpower > 0 ? stats.totalCarton / stats.totalManpower : 0;
-
-    // Factory manpower from separate manpower data
-    let factoryManpower = 0;
-    if (prevMonthManpower && prevMonthManpower.data) {
-      factoryManpower = prevMonthManpower.data.reduce((sum, day) => sum + (day.manpower || 0), 0);
-    }
+    // Calculate manpower from new structure
+    const { sectionManpower, total_manpower } = calculateSectionManpower(prevMonthManpower, allSections);
+    
+    const valuePerManpower = total_manpower > 0 ? stats.totalValue / total_manpower : 0;
+    const cartonPerManpower = total_manpower > 0 ? stats.totalCarton / total_manpower : 0;
 
     return {
       stats: {
         ...stats,
-        totalManpower: stats.totalManpower,
-        factoryManpower
+        sectionManpower,
+        totalManpowerFromData: total_manpower
       },
       sectionData: sectionArray,
       productivity: { valuePerManpower, cartonPerManpower }
     };
-  }, [prevMonthProducts, prevMonthManpower]);
+  }, [prevMonthProducts, prevMonthManpower, allSections, calculateSectionManpower]);
 
   // Prepare monthly comparison data
   const monthlyComparison = useMemo(() => {
@@ -344,10 +454,11 @@ export default function Dashboard() {
       totalValue: currentMonthStats.stats.totalValue,
       totalBatch: currentMonthStats.stats.totalBatch,
       totalCarton: currentMonthStats.stats.totalCarton,
-      totalManpower: currentMonthStats.stats.totalManpower,
-      factoryManpower: currentMonthStats.stats.factoryManpower,
+      sectionManpower: currentMonthStats.stats.sectionManpower,
+      totalManpower: currentMonthStats.stats.totalManpowerFromData,
       sectionData: currentMonthStats.sectionData,
-      productivity: currentMonthStats.productivity
+      productivity: currentMonthStats.productivity,
+      allSections: allSections
     };
 
     const previous = {
@@ -356,14 +467,21 @@ export default function Dashboard() {
       totalValue: previousMonthStats.stats.totalValue,
       totalBatch: previousMonthStats.stats.totalBatch,
       totalCarton: previousMonthStats.stats.totalCarton,
-      totalManpower: previousMonthStats.stats.totalManpower,
-      factoryManpower: previousMonthStats.stats.factoryManpower,
+      sectionManpower: previousMonthStats.stats.sectionManpower,
+      totalManpower: previousMonthStats.stats.totalManpowerFromData,
       sectionData: previousMonthStats.sectionData,
-      productivity: previousMonthStats.productivity
+      productivity: previousMonthStats.productivity,
+      allSections: allSections
     };
 
     return { current, previous };
-  }, [currentMonthStats, previousMonthStats, currentMonthName, currentYear, prevMonthName, prevMonthInfo.year]);
+  }, [currentMonthStats, previousMonthStats, currentMonthName, currentYear, prevMonthName, prevMonthInfo.year, allSections]);
+
+  // Get section manpower for a specific section
+  const getSectionManpower = useCallback((sectionName: string, manpowerData: Record<string, number>) => {
+    const normalizedSection = sectionName.toLowerCase();
+    return manpowerData[normalizedSection] || 0;
+  }, []);
 
   // Format currency
   const formatCurrency = (amount: number) => {
@@ -473,6 +591,12 @@ export default function Dashboard() {
                   Previous: <span className="font-medium">{prevMonthName} {prevMonthInfo.year}</span>
                 </p>
               </div>
+              <div className="flex items-center gap-2">
+                <Layers className="w-4 h-4 text-gray-400" />
+                <p className="text-gray-500">
+                  Sections: <span className="font-medium">{allSections.length}</span>
+                </p>
+              </div>
             </div>
           </div>
           
@@ -482,6 +606,9 @@ export default function Dashboard() {
             </div>
             <div className="px-4 py-2 bg-green-50 text-green-700 rounded-lg font-medium">
               Sections: {currentMonthStats.sectionData.length}
+            </div>
+            <div className="px-4 py-2 bg-orange-50 text-orange-700 rounded-lg font-medium">
+              Manpower: {formatNumber(monthlyComparison.current.totalManpower)}
             </div>
           </div>
         </div>
@@ -538,22 +665,22 @@ export default function Dashboard() {
             </div>
           </div>
 
-          {/* Batch Comparison */}
+          {/* Total Manpower Comparison */}
           <div className="bg-white p-4 rounded-lg shadow-sm border">
-            <p className="text-sm text-gray-600 font-medium mb-2">Total Batches</p>
+            <p className="text-sm text-gray-600 font-medium mb-2">Total Manpower</p>
             <div className="flex items-end justify-between">
               <div>
                 <p className="text-2xl font-bold text-gray-900">
-                  {formatNumber(monthlyComparison.current.totalBatch)}
+                  {formatNumber(monthlyComparison.current.totalManpower)}
                 </p>
                 <p className="text-sm text-gray-500">
-                  {formatNumber(monthlyComparison.previous.totalBatch)}
+                  {formatNumber(monthlyComparison.previous.totalManpower)}
                 </p>
               </div>
               {(() => {
                 const percentageChange = calculatePercentageChange(
-                  monthlyComparison.current.totalBatch,
-                  monthlyComparison.previous.totalBatch
+                  monthlyComparison.current.totalManpower,
+                  monthlyComparison.previous.totalManpower
                 );
                 const indicator = getChangeIndicator(percentageChange);
                 const IndicatorIcon = indicator.icon;
@@ -600,22 +727,22 @@ export default function Dashboard() {
             </div>
           </div>
 
-          {/* Manpower Comparison */}
+          {/* Productivity Comparison */}
           <div className="bg-white p-4 rounded-lg shadow-sm border">
-            <p className="text-sm text-gray-600 font-medium mb-2">Section Manpower</p>
+            <p className="text-sm text-gray-600 font-medium mb-2">Productivity (Value/Manpower)</p>
             <div className="flex items-end justify-between">
               <div>
                 <p className="text-2xl font-bold text-gray-900">
-                  {formatNumber(monthlyComparison.current.totalManpower)}
+                  {formatCurrency(monthlyComparison.current.productivity.valuePerManpower)}
                 </p>
                 <p className="text-sm text-gray-500">
-                  {formatNumber(monthlyComparison.previous.totalManpower)}
+                  {formatCurrency(monthlyComparison.previous.productivity.valuePerManpower)}
                 </p>
               </div>
               {(() => {
                 const percentageChange = calculatePercentageChange(
-                  monthlyComparison.current.totalManpower,
-                  monthlyComparison.previous.totalManpower
+                  monthlyComparison.current.productivity.valuePerManpower,
+                  monthlyComparison.previous.productivity.valuePerManpower
                 );
                 const indicator = getChangeIndicator(percentageChange);
                 const IndicatorIcon = indicator.icon;
@@ -630,6 +757,88 @@ export default function Dashboard() {
               })()}
             </div>
           </div>
+        </div>
+      </div>
+
+      {/* Section Overview */}
+      <div className="mb-8 bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+            <FolderOpen className="w-5 h-5 text-blue-600" />
+            Sections Overview ({allSections.length} sections)
+          </h2>
+          <div className="text-sm text-gray-500">
+            {currentMonthStats.sectionData.length} active in current month
+          </div>
+        </div>
+        
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+          {allSections.map(section => {
+            const currentSectionData = currentMonthStats.sectionData.find(s => s.name === section);
+            const prevSectionData = previousMonthStats.sectionData.find(s => s.name === section);
+            
+            const isNewSection = currentSectionData && !prevSectionData;
+            const isInactiveThisMonth = !currentSectionData && prevSectionData;
+            const isActiveBoth = currentSectionData && prevSectionData;
+            
+            return (
+              <div 
+                key={section} 
+                className={`p-4 rounded-lg border transition-all ${
+                  isNewSection ? 'border-green-200 bg-green-50' :
+                  isInactiveThisMonth ? 'border-gray-200 bg-gray-50 opacity-70' :
+                  'border-blue-100 bg-blue-50 hover:bg-blue-100'
+                }`}
+              >
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="font-medium text-gray-900">
+                    {formatSectionName(section)}
+                  </h3>
+                  <div className="flex items-center gap-1">
+                    {isNewSection && (
+                      <span className="text-xs px-2 py-0.5 bg-green-100 text-green-800 rounded-full">
+                        New
+                      </span>
+                    )}
+                    {isInactiveThisMonth && (
+                      <span className="text-xs px-2 py-0.5 bg-gray-100 text-gray-800 rounded-full">
+                        Inactive
+                      </span>
+                    )}
+                  </div>
+                </div>
+                
+                <div className="space-y-2">
+                  {currentSectionData ? (
+                    <>
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm text-gray-600">Value</span>
+                        <span className="font-medium text-gray-900">
+                          {formatCurrency(currentSectionData.totalValue)}
+                        </span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm text-gray-600">Products</span>
+                        <span className="font-medium text-gray-900">
+                          {currentSectionData.products.length}
+                        </span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm text-gray-600">Manpower</span>
+                        <span className="font-medium text-gray-900">
+                          {formatNumber(getSectionManpower(section, monthlyComparison.current.sectionManpower))}
+                        </span>
+                      </div>
+                    </>
+                  ) : (
+                    <div className="text-center py-2">
+                      <span className="text-sm text-gray-500">No production this month</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+          })}
         </div>
       </div>
 
@@ -661,7 +870,33 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Productivity Comparison */}
+        {/* Current Month Manpower */}
+        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-600 font-medium">Current Month Manpower</p>
+              <h3 className="text-2xl font-bold text-gray-900 mt-2">
+                {formatNumber(monthlyComparison.current.totalManpower)}
+              </h3>
+              <p className="text-sm text-gray-500 mt-1">
+                Across {Object.keys(monthlyComparison.current.sectionManpower).length} sections
+              </p>
+            </div>
+            <div className="p-3 bg-orange-50 rounded-lg">
+              <Users className="w-6 h-6 text-orange-600" />
+            </div>
+          </div>
+          <div className="mt-4 pt-4 border-t border-gray-100">
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-gray-600">Previous Month</span>
+              <span className="font-medium">
+                {formatNumber(monthlyComparison.previous.totalManpower)}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* Productivity */}
         <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
           <div className="flex items-center justify-between">
             <div>
@@ -670,7 +905,7 @@ export default function Dashboard() {
                 {formatCurrency(monthlyComparison.current.productivity.valuePerManpower)}
               </h3>
               <p className="text-sm text-gray-500 mt-1">
-                Current month
+                Current month efficiency
               </p>
             </div>
             <div className="p-3 bg-purple-50 rounded-lg">
@@ -682,32 +917,6 @@ export default function Dashboard() {
               <span className="text-gray-600">Previous Month</span>
               <span className="font-medium">
                 {formatCurrency(monthlyComparison.previous.productivity.valuePerManpower)}
-              </span>
-            </div>
-          </div>
-        </div>
-
-        {/* Factory Manpower Comparison */}
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600 font-medium">Factory Manpower</p>
-              <h3 className="text-2xl font-bold text-gray-900 mt-2">
-                {formatNumber(monthlyComparison.current.factoryManpower)}
-              </h3>
-              <p className="text-sm text-gray-500 mt-1">
-                Total factory days
-              </p>
-            </div>
-            <div className="p-3 bg-orange-50 rounded-lg">
-              <Users className="w-6 h-6 text-orange-600" />
-            </div>
-          </div>
-          <div className="mt-4 pt-4 border-t border-gray-100">
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-gray-600">Previous Month</span>
-              <span className="font-medium">
-                {formatNumber(monthlyComparison.previous.factoryManpower)}
               </span>
             </div>
           </div>
@@ -730,13 +939,64 @@ export default function Dashboard() {
             </div>
           </div>
           <div className="mt-4 pt-4 border-t border-gray-100">
-            <div className="flex items-center gap-2 text-sm">
-              <Target className="w-4 h-4 text-blue-600" />
-              <span className="text-gray-600">{currentMonthStats.stats.totalProductsCount} products active</span>
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-gray-600">New Sections</span>
+              <span className="font-medium text-green-600">
+                {currentMonthStats.sectionData.filter(s => 
+                  !previousMonthStats.sectionData.find(ps => ps.name === s.name)
+                ).length}
+              </span>
             </div>
           </div>
         </div>
       </div>
+
+      {/* Section-wise Manpower Analysis */}
+      {Object.keys(monthlyComparison.current.sectionManpower).length > 0 && (
+        <div className="mb-8 bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+          <h2 className="text-lg font-semibold text-gray-900 mb-6">Section-wise Manpower Analysis</h2>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+            {Object.entries(monthlyComparison.current.sectionManpower)
+              .filter(([section]) => monthlyComparison.current.sectionManpower[section] > 0)
+              .sort(([, a], [, b]) => b - a)
+              .map(([section, manpower]) => {
+                const prevManpower = monthlyComparison.previous.sectionManpower[section] || 0;
+                const percentage = getPercentage(manpower, monthlyComparison.current.totalManpower);
+                const changePercentage = calculatePercentageChange(manpower, prevManpower);
+                const indicator = getChangeIndicator(changePercentage);
+                const IndicatorIcon = indicator.icon;
+                
+                return (
+                  <div key={section} className="bg-gray-50 p-4 rounded-lg hover:bg-gray-100 transition-colors">
+                    <p className="text-sm text-gray-600 font-medium mb-2">
+                      {formatSectionName(section)}
+                    </p>
+                    <div className="flex items-end justify-between">
+                      <div>
+                        <p className="text-lg font-bold text-gray-900">{formatNumber(manpower)}</p>
+                        <p className="text-xs text-gray-500">Prev: {formatNumber(prevManpower)}</p>
+                      </div>
+                      <div className="flex flex-col items-end">
+                        <div className={`flex items-center gap-1 ${indicator.color}`}>
+                          <IndicatorIcon className="w-3 h-3" />
+                          <span className="text-xs font-medium">
+                            {changePercentage > 0 ? '+' : ''}{changePercentage.toFixed(1)}%
+                          </span>
+                        </div>
+                        <div className="w-16 bg-gray-200 rounded-full h-1.5 mt-1">
+                          <div 
+                            className="bg-blue-600 h-1.5 rounded-full"
+                            style={{ width: `${Math.min(percentage * 3, 100)}%` }}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+          </div>
+        </div>
+      )}
 
       {/* Main Content Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
@@ -761,6 +1021,11 @@ export default function Dashboard() {
                   const changePercentage = calculatePercentageChange(section.totalValue, prevValue);
                   const indicator = getChangeIndicator(changePercentage);
                   const IndicatorIcon = indicator.icon;
+                  
+                  // Get manpower for this section from new structure
+                  const sectionManpower = getSectionManpower(section.name, monthlyComparison.current.sectionManpower);
+                  const prevSectionManpower = getSectionManpower(section.name, monthlyComparison.previous.sectionManpower);
+                  const manpowerChange = calculatePercentageChange(sectionManpower, prevSectionManpower);
 
                   return (
                     <div key={section.name} className="group">
@@ -774,16 +1039,16 @@ export default function Dashboard() {
                             <span className="font-bold text-lg">{idx + 1}</span>
                           </div>
                           <div>
-                            <h4 className="font-semibold text-gray-900 capitalize">{section.name}</h4>
+                            <h4 className="font-semibold text-gray-900 capitalize">
+                              {formatSectionName(section.name)}
+                            </h4>
                             <div className="flex items-center gap-3 mt-1">
                               <span className="text-sm text-gray-500">
                                 {section.products.length} products
                               </span>
                               <div className="flex items-center gap-1">
-                                <IndicatorIcon className={`w-3 h-3 ${indicator.color}`} />
-                                <span className={`text-xs ${indicator.color}`}>
-                                  {changePercentage > 0 ? '+' : ''}{changePercentage.toFixed(1)}%
-                                </span>
+                                <Users className="w-3 h-3 text-blue-500" />
+                                <span className="text-xs text-blue-600">{formatNumber(sectionManpower)} manpower</span>
                               </div>
                             </div>
                           </div>
@@ -812,19 +1077,35 @@ export default function Dashboard() {
                           <div className="text-center p-2 bg-blue-50 rounded">
                             <p className="text-gray-600">Current Value</p>
                             <p className="font-bold text-gray-900">{formatCurrency(section.totalValue)}</p>
+                            <div className={`flex items-center justify-center gap-1 mt-1 ${indicator.color}`}>
+                              <IndicatorIcon className="w-2 h-2" />
+                              <span className="text-xs">
+                                {changePercentage > 0 ? '+' : ''}{changePercentage.toFixed(1)}%
+                              </span>
+                            </div>
                           </div>
-                          <div className="text-center p-2 bg-gray-50 rounded">
-                            <p className="text-gray-600">Previous Month</p>
-                            <p className="font-bold text-gray-900">{formatCurrency(prevValue)}</p>
+                          <div className="text-center p-2 bg-orange-50 rounded">
+                            <p className="text-gray-600">Manpower</p>
+                            <p className="font-bold text-gray-900">{formatNumber(sectionManpower)}</p>
+                            <div className={`flex items-center justify-center gap-1 mt-1 ${
+                              manpowerChange > 0 ? 'text-green-600' : manpowerChange < 0 ? 'text-red-600' : 'text-yellow-600'
+                            }`}>
+                              {manpowerChange > 0 ? <ChevronUp className="w-2 h-2" /> : 
+                               manpowerChange < 0 ? <ChevronDown className="w-2 h-2" /> : 
+                               <Minus className="w-2 h-2" />}
+                              <span className="text-xs">
+                                {manpowerChange > 0 ? '+' : ''}{manpowerChange.toFixed(1)}%
+                              </span>
+                            </div>
                           </div>
                           <div className="text-center p-2 bg-green-50 rounded">
                             <p className="text-gray-600">Cartons</p>
                             <p className="font-bold text-gray-900">{formatNumber(section.totalCarton)}</p>
                           </div>
-                          <div className="text-center p-2 bg-orange-50 rounded">
+                          <div className="text-center p-2 bg-purple-50 rounded">
                             <p className="text-gray-600">Efficiency</p>
                             <p className="font-bold text-gray-900">
-                              {section.totalManpower > 0 ? formatCurrency(section.totalValue / section.totalManpower) : '৳0'}
+                              {sectionManpower > 0 ? formatCurrency(section.totalValue / sectionManpower) : '৳0'}
                             </p>
                           </div>
                         </div>
@@ -839,167 +1120,58 @@ export default function Dashboard() {
               </div>
             )}
           </div>
+        </div>
 
-          {/* Monthly Comparison Chart */}
+        {/* Right Column - Insights */}
+        <div className="space-y-6">
+          {/* Section Changes */}
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-6">Monthly Performance Comparison</h2>
-            <div className="space-y-6">
-              {/* Production Value Comparison */}
-              <div>
-                <div className="flex justify-between items-center mb-2">
-                  <p className="font-medium text-gray-700">Production Value</p>
-                  <div className="flex items-center gap-4">
-                    <div className="text-sm text-gray-600">
-                      Current: <span className="font-bold">{formatCurrency(monthlyComparison.current.totalValue)}</span>
-                    </div>
-                    <div className="text-sm text-gray-600">
-                      Previous: <span className="font-bold">{formatCurrency(monthlyComparison.previous.totalValue)}</span>
-                    </div>
-                  </div>
+            <h2 className="text-lg font-semibold text-gray-900 mb-6">Section Changes</h2>
+            <div className="space-y-4">
+              {/* New Sections */}
+              <div className="p-4 bg-green-50 rounded-lg border border-green-200">
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="font-medium text-green-800">New Sections</h3>
+                  <span className="text-lg font-bold text-green-600">
+                    {currentMonthStats.sectionData.filter(s => 
+                      !previousMonthStats.sectionData.find(ps => ps.name === s.name)
+                    ).length}
+                  </span>
                 </div>
-                <div className="h-4 bg-gray-200 rounded-full overflow-hidden">
-                  <div 
-                    className="h-full bg-blue-600 rounded-full"
-                    style={{ 
-                      width: `${Math.min(
-                        (monthlyComparison.current.totalValue / (monthlyComparison.current.totalValue + monthlyComparison.previous.totalValue)) * 100 * 2,
-                        100
-                      )}%` 
-                    }}
-                  ></div>
-                </div>
-                <div className="flex justify-between text-xs text-gray-500 mt-1">
-                  <span>Current Month</span>
-                  <span>Previous Month</span>
+                <div className="space-y-1">
+                  {currentMonthStats.sectionData
+                    .filter(s => !previousMonthStats.sectionData.find(ps => ps.name === s.name))
+                    .map(section => (
+                      <div key={section.name} className="flex justify-between items-center text-sm">
+                        <span className="text-green-700">{formatSectionName(section.name)}</span>
+                        <span className="font-medium">{formatCurrency(section.totalValue)}</span>
+                      </div>
+                    ))}
                 </div>
               </div>
 
-              {/* Carton Comparison */}
-              <div>
-                <div className="flex justify-between items-center mb-2">
-                  <p className="font-medium text-gray-700">Total Cartons</p>
-                  <div className="flex items-center gap-4">
-                    <div className="text-sm text-gray-600">
-                      Current: <span className="font-bold">{formatNumber(monthlyComparison.current.totalCarton)}</span>
-                    </div>
-                    <div className="text-sm text-gray-600">
-                      Previous: <span className="font-bold">{formatNumber(monthlyComparison.previous.totalCarton)}</span>
-                    </div>
-                  </div>
+              {/* Inactive Sections */}
+              <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="font-medium text-gray-800">Inactive This Month</h3>
+                  <span className="text-lg font-bold text-gray-600">
+                    {previousMonthStats.sectionData.filter(s => 
+                      !currentMonthStats.sectionData.find(cs => cs.name === s.name)
+                    ).length}
+                  </span>
                 </div>
-                <div className="h-4 bg-gray-200 rounded-full overflow-hidden">
-                  <div 
-                    className="h-full bg-green-600 rounded-full"
-                    style={{ 
-                      width: `${Math.min(
-                        (monthlyComparison.current.totalCarton / (monthlyComparison.current.totalCarton + monthlyComparison.previous.totalCarton)) * 100 * 2,
-                        100
-                      )}%` 
-                    }}
-                  ></div>
-                </div>
-                <div className="flex justify-between text-xs text-gray-500 mt-1">
-                  <span>Current Month</span>
-                  <span>Previous Month</span>
-                </div>
-              </div>
-
-              {/* Productivity Comparison */}
-              <div>
-                <div className="flex justify-between items-center mb-2">
-                  <p className="font-medium text-gray-700">Productivity (Value/Manpower)</p>
-                  <div className="flex items-center gap-4">
-                    <div className="text-sm text-gray-600">
-                      Current: <span className="font-bold">{formatCurrency(monthlyComparison.current.productivity.valuePerManpower)}</span>
-                    </div>
-                    <div className="text-sm text-gray-600">
-                      Previous: <span className="font-bold">{formatCurrency(monthlyComparison.previous.productivity.valuePerManpower)}</span>
-                    </div>
-                  </div>
-                </div>
-                <div className="h-4 bg-gray-200 rounded-full overflow-hidden">
-                  <div 
-                    className="h-full bg-purple-600 rounded-full"
-                    style={{ 
-                      width: `${Math.min(
-                        (monthlyComparison.current.productivity.valuePerManpower / 
-                        (monthlyComparison.current.productivity.valuePerManpower + monthlyComparison.previous.productivity.valuePerManpower)) * 100 * 2,
-                        100
-                      )}%` 
-                    }}
-                  ></div>
-                </div>
-                <div className="flex justify-between text-xs text-gray-500 mt-1">
-                  <span>Current Month</span>
-                  <span>Previous Month</span>
+                <div className="space-y-1">
+                  {previousMonthStats.sectionData
+                    .filter(s => !currentMonthStats.sectionData.find(cs => cs.name === s.name))
+                    .map(section => (
+                      <div key={section.name} className="flex justify-between items-center text-sm">
+                        <span className="text-gray-600">{formatSectionName(section.name)}</span>
+                        <span className="text-gray-500">Was {formatCurrency(section.totalValue)}</span>
+                      </div>
+                    ))}
                 </div>
               </div>
             </div>
-          </div>
-        </div>
-
-        {/* Right Column - Section Comparison & Insights */}
-        <div className="space-y-6">
-          {/* Section Comparison */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-6">Section Performance Comparison</h2>
-            {currentMonthStats.sectionData.length > 0 ? (
-              <div className="space-y-4 max-h-[500px] overflow-y-auto pr-2">
-                {currentMonthStats.sectionData.map(section => {
-                  const percentage = getPercentage(section.totalValue, monthlyComparison.current.totalValue);
-                  const prevMonthSection = monthlyComparison.previous.sectionData.find(s => s.name === section.name);
-                  const prevValue = prevMonthSection?.totalValue || 0;
-                  const changePercentage = calculatePercentageChange(section.totalValue, prevValue);
-                  const indicator = getChangeIndicator(changePercentage);
-                  const IndicatorIcon = indicator.icon;
-
-                  return (
-                    <div key={section.name} className="p-4 border border-gray-200 rounded-lg hover:border-blue-200 transition-colors">
-                      <div className="flex justify-between items-start mb-3">
-                        <h3 className="font-semibold text-gray-900 capitalize">{section.name}</h3>
-                        <div className="flex items-center gap-2">
-                          <span className="text-sm font-medium text-blue-600 bg-blue-50 px-2 py-1 rounded">
-                            {percentage.toFixed(1)}%
-                          </span>
-                          <div className={`flex items-center gap-1 px-2 py-1 rounded ${indicator.bgColor}`}>
-                            <IndicatorIcon className={`w-3 h-3 ${indicator.color}`} />
-                            <span className={`text-xs font-medium ${indicator.color}`}>
-                              {changePercentage > 0 ? '+' : ''}{changePercentage.toFixed(1)}%
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                      
-                      <div className="grid grid-cols-2 gap-3 mb-3">
-                        <div className="text-center p-2 bg-blue-50 rounded">
-                          <p className="text-xs text-gray-600">Current Value</p>
-                          <p className="font-bold text-gray-900">{formatCurrency(section.totalValue)}</p>
-                        </div>
-                        <div className="text-center p-2 bg-gray-50 rounded">
-                          <p className="text-xs text-gray-600">Previous Month</p>
-                          <p className="font-bold text-gray-900">{formatCurrency(prevValue)}</p>
-                        </div>
-                      </div>
-                      
-                      <div className="grid grid-cols-2 gap-3">
-                        <div className="text-center p-2 bg-gray-50 rounded">
-                          <p className="text-xs text-gray-600">Manpower</p>
-                          <p className="font-bold text-gray-900">{formatNumber(section.totalManpower)}</p>
-                        </div>
-                        <div className="text-center p-2 bg-gray-50 rounded">
-                          <p className="text-xs text-gray-600">Products</p>
-                          <p className="font-bold text-gray-900">{section.products.length}</p>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            ) : (
-              <div className="text-center py-8">
-                <p className="text-gray-500">No section data available</p>
-              </div>
-            )}
           </div>
 
           {/* Key Insights */}
@@ -1012,7 +1184,7 @@ export default function Dashboard() {
                   <div>
                     <p className="font-medium text-yellow-800">Top Performer</p>
                     <p className="text-sm text-yellow-700 mt-1">
-                      <span className="font-bold capitalize">{currentMonthStats.topSections[0]?.name}</span> section leads with {
+                      <span className="font-bold">{formatSectionName(currentMonthStats.topSections[0]?.name)}</span> leads with {
                         getPercentage(currentMonthStats.topSections[0].totalValue, monthlyComparison.current.totalValue).toFixed(1)
                       }% of total production
                     </p>
@@ -1031,41 +1203,34 @@ export default function Dashboard() {
                       } by {Math.abs(calculatePercentageChange(
                         monthlyComparison.current.totalValue,
                         monthlyComparison.previous.totalValue
-                      )).toFixed(1)}% compared to previous month
-                    </p>
-                  </div>
-                </div>
-              )}
-
-              {monthlyComparison.current.productivity.valuePerManpower > 0 && (
-                <div className="flex items-start gap-3 p-4 bg-green-50 rounded-lg">
-                  <Users className="w-5 h-5 text-green-600 mt-0.5 flex-shrink-0" />
-                  <div>
-                    <p className="font-medium text-green-800">Productivity Trend</p>
-                    <p className="text-sm text-green-700 mt-1">
-                      Current productivity: {formatCurrency(monthlyComparison.current.productivity.valuePerManpower)} vs {
-                        formatCurrency(monthlyComparison.previous.productivity.valuePerManpower)
-                      } previous month
-                    </p>
-                  </div>
-                </div>
-              )}
-
-              {monthlyComparison.current.factoryManpower > 0 && (
-                <div className="flex items-start gap-3 p-4 bg-purple-50 rounded-lg">
-                  <Users className="w-5 h-5 text-purple-600 mt-0.5 flex-shrink-0" />
-                  <div>
-                    <p className="font-medium text-purple-800">Manpower Utilization</p>
-                    <p className="text-sm text-purple-700 mt-1">
-                      Factory manpower {
-                        monthlyComparison.current.factoryManpower >= monthlyComparison.previous.factoryManpower ? 'increased' : 'decreased'
-                      } by {Math.abs(calculatePercentageChange(
-                        monthlyComparison.current.factoryManpower,
-                        monthlyComparison.previous.factoryManpower
                       )).toFixed(1)}%
                     </p>
                   </div>
                 </div>
+              )}
+
+              {Object.keys(monthlyComparison.current.sectionManpower).length > 0 && (
+                (() => {
+                  const sections = Object.entries(monthlyComparison.current.sectionManpower)
+                    .filter(([key]) => key !== 'total_manpower');
+                  if (sections.length === 0) return null;
+                  
+                  const highestManpower = sections.reduce((max, curr) => 
+                    curr[1] > max[1] ? curr : max
+                  );
+                  
+                  return (
+                    <div className="flex items-start gap-3 p-4 bg-purple-50 rounded-lg">
+                      <Users className="w-5 h-5 text-purple-600 mt-0.5 flex-shrink-0" />
+                      <div>
+                        <p className="font-medium text-purple-800">Highest Manpower</p>
+                        <p className="text-sm text-purple-700 mt-1">
+                          {formatSectionName(highestManpower[0])} has highest manpower: {formatNumber(highestManpower[1])} days
+                        </p>
+                      </div>
+                    </div>
+                  );
+                })()
               )}
             </div>
           </div>
@@ -1086,21 +1251,18 @@ export default function Dashboard() {
             </p>
           </div>
           <div>
-            <p className="text-sm text-gray-300">Carton Change</p>
+            <p className="text-sm text-gray-300">Manpower Change</p>
             <p className={`text-xl font-bold mt-1 ${
-              monthlyComparison.current.totalCarton >= monthlyComparison.previous.totalCarton ? 'text-green-400' : 'text-red-400'
+              monthlyComparison.current.totalManpower >= monthlyComparison.previous.totalManpower ? 'text-green-400' : 'text-red-400'
             }`}>
-              {monthlyComparison.current.totalCarton >= monthlyComparison.previous.totalCarton ? '+' : '-'}
-              {Math.abs(monthlyComparison.current.totalCarton - monthlyComparison.previous.totalCarton)}
+              {monthlyComparison.current.totalManpower >= monthlyComparison.previous.totalManpower ? '+' : '-'}
+              {Math.abs(monthlyComparison.current.totalManpower - monthlyComparison.previous.totalManpower)}
             </p>
           </div>
           <div>
-            <p className="text-sm text-gray-300">Productivity Change</p>
-            <p className={`text-xl font-bold mt-1 ${
-              monthlyComparison.current.productivity.valuePerManpower >= monthlyComparison.previous.productivity.valuePerManpower ? 'text-green-400' : 'text-red-400'
-            }`}>
-              {monthlyComparison.current.productivity.valuePerManpower >= monthlyComparison.previous.productivity.valuePerManpower ? '+' : '-'}
-              {formatCurrency(Math.abs(monthlyComparison.current.productivity.valuePerManpower - monthlyComparison.previous.productivity.valuePerManpower))}
+            <p className="text-sm text-gray-300">Active Sections</p>
+            <p className="text-xl font-bold mt-1">
+              Current: {currentMonthStats.sectionData.length} | Previous: {previousMonthStats.sectionData.length}
             </p>
           </div>
           <div>
@@ -1125,15 +1287,15 @@ export default function Dashboard() {
             </div>
             <div className="flex items-center gap-4">
               <div className="text-center">
-                <p className="text-sm text-gray-300">Sections Active</p>
+                <p className="text-sm text-gray-300">Total Sections</p>
                 <p className="text-lg font-bold">
-                  {currentMonthStats.sectionData.length} ({monthlyComparison.previous.sectionData.length} previous)
+                  {allSections.length} unique sections
                 </p>
               </div>
               <div className="text-center">
-                <p className="text-sm text-gray-300">Products Active</p>
+                <p className="text-sm text-gray-300">Products</p>
                 <p className="text-lg font-bold">
-                  {currentMonthStats.stats.totalProductsCount} ({previousMonthStats.stats.totalProductsCount} previous)
+                  {currentMonthStats.stats.totalProductsCount} total products
                 </p>
               </div>
             </div>

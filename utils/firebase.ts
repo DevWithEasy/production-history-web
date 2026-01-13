@@ -118,7 +118,7 @@ class Firebase {
 ): Promise<T | null> {
   const ref = doc(
     db,
-    "manpower",
+    "manpowers",
     year.toString(),
     "months",
     monthName
