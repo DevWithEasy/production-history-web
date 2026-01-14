@@ -9,6 +9,8 @@ export interface Product {
   production_target: number;
 
   data: {
+    manpower: number;
+    manpower: number;
     date: number;
     batch: number;
     carton: number;
