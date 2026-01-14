@@ -149,6 +149,8 @@ export default function Reports() {
           carton: findDayProduction?.carton ?? 0,
           totalBatch,
           totalCarton,
+          cartonValue: (findDayProduction?.carton ?? 0) * price,
+          totalCartonValue: totalCarton * price,
         };
       })
       // ফিল্টার: যেসব প্রোডাক্টে batch এবং carton উভয়ই ০ (শূন্য) সেগুলো বাদ
@@ -200,6 +202,24 @@ export default function Reports() {
   const sections = Object.keys(data).filter(
     (section) => data[section].length > 0
   );
+
+  // প্রতিটি সেকশনের মোট কার্টন ভ্যালু (প্রাইস * কার্টন)
+  const getSectionCartonValue = (section: string): number => {
+    if (!data[section]) return 0;
+    return data[section].reduce(
+      (sum, product) => sum + product.carton * product.price,
+      0
+    );
+  };
+
+  // প্রতিটি সেকশনের মোট টোটাল কার্টন ভ্যালু
+  const getSectionTotalCartonValue = (section: string): number => {
+    if (!data[section]) return 0;
+    return data[section].reduce(
+      (sum, product) => sum + product.totalCarton * product.price,
+      0
+    );
+  };
 
   // ফরম্যাটেড তারিখ
   const formattedDate = selectedDate.toLocaleDateString("en-GB", {
@@ -310,24 +330,12 @@ export default function Reports() {
                             className="border w-8 border-gray-300 text-center align-middle print:py-0 print:px-1 section-column"
                             rowSpan={data[section].length}
                           >
-                            <div className="section-content -rotate-90">
-                              <p className="font-semibold text-xs print:text-[10px] leading-tight">
-                                {section.toUpperCase()}
+                            <div className="section-content">
+                              <p className="font-semibold text-xs print:text-[10px] leading-tight capitalize">
+                                {section}
                               </p>
-                              <p>
-                                (
-                                {sections
-                                  .reduce(
-                                    (sum, section) =>
-                                      sum +
-                                      data[section].reduce(
-                                        (s, p) => s + p.carton * p.price,
-                                        0
-                                      ),
-                                    0
-                                  )
-                                  .toFixed(0)}
-                                )
+                              <p className="text-xs print:text-[9px]">
+                                (৳{getSectionCartonValue(section).toFixed(0)})
                               </p>
                             </div>
                           </td>
@@ -434,6 +442,48 @@ export default function Reports() {
                         0
                       )}
                     </span>
+                  </td>
+                </tr>
+                {/* মোট ভ্যালু সারি যোগ করুন */}
+                <tr className="bg-blue-100 font-bold">
+                  <td
+                    colSpan={2}
+                    className="border border-gray-300 p-1 text-right print:py-0 print:px-1"
+                  >
+                    <span className="print:text-xs">Total Value:</span>
+                  </td>
+                  <td className="border border-gray-300 p-1 text-center print:py-0 print:px-1 batch-column">
+                    <span className="print:text-xs">-</span>
+                  </td>
+                  <td className="border border-gray-300 p-1 text-center print:py-0 print:px-1 carton-column">
+                    <span className="print:text-xs text-blue-700">
+                      ৳
+                      {sections
+                        .reduce(
+                          (sum, section) =>
+                            sum + getSectionCartonValue(section),
+                          0
+                        )
+                        .toFixed(0)}
+                    </span>
+                  </td>
+                  <td className="border border-gray-300 p-1 text-center print:py-0 print:px-1 total-batch-column">
+                    <span className="print:text-xs">-</span>
+                  </td>
+                  <td className="border border-gray-300 p-1 text-center print:py-0 print:px-1 total-carton-column">
+                    <span className="print:text-xs text-green-700">
+                      ৳
+                      {sections
+                        .reduce(
+                          (sum, section) =>
+                            sum + getSectionTotalCartonValue(section),
+                          0
+                        )
+                        .toFixed(0)}
+                    </span>
+                  </td>
+                  <td className="border border-gray-300 p-1 text-center print:py-0 print:px-1 mp-column">
+                    <span className="print:text-xs">-</span>
                   </td>
                 </tr>
               </tfoot>

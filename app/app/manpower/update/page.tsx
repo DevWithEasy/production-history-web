@@ -426,12 +426,12 @@ export default function ManpowerUpdate() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-gray-50 p-4 md:p-6">
+    <div className="min-h-screen bg-linear-to-br from-blue-50 to-gray-50 p-4 md:p-6">
       <div className="max-w-full mx-auto">
         {/* Header Section */}
         <div className="mb-8">
           <div className="flex items-center gap-3 mb-4">
-            <div className="bg-gradient-to-r from-blue-600 to-blue-700 p-3 rounded-xl">
+            <div className="bg-linear-to-r from-blue-600 to-blue-700 p-3 rounded-xl">
               <Users className="h-8 w-8 text-white" />
             </div>
             <div>
@@ -474,7 +474,7 @@ export default function ManpowerUpdate() {
               </div>
               <button
                 onClick={saveAll}
-                className="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-4 py-2 rounded-lg font-medium hover:from-blue-700 hover:to-blue-800 transition-all flex items-center gap-2"
+                className="bg-linear-to-r from-blue-600 to-blue-700 text-white px-4 py-2 rounded-lg font-medium hover:from-blue-700 hover:to-blue-800 transition-all flex items-center gap-2"
               >
                 <Save className="h-4 w-4" />
                 সেভ করুন
@@ -500,7 +500,7 @@ export default function ManpowerUpdate() {
                 ) : (
                   <Loader2 className="h-5 w-5 animate-spin" />
                 )}
-                <span className="font-[family-name:var(--font-tiro-bangla)]">
+                <span className="font-(family-name:--font-tiro-bangla)">
                   {message.text}
                 </span>
               </div>

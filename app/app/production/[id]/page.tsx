@@ -2,15 +2,7 @@
 
 import { db } from "@/utils/firebaseConfig";
 import { getPeriod } from "@/utils/storage";
-import {
-  collection,
-  doc,
-  getDocs,
-  query,
-  updateDoc,
-  where,
-} from "firebase/firestore";
-import { debounce } from "lodash";
+import { collection, doc, getDoc, getDocs, query, updateDoc, where } from "firebase/firestore";
 import {
   AlertCircle,
   BarChart3,
@@ -29,7 +21,7 @@ import {
   TrendingUp,
 } from "lucide-react";
 import { useParams } from "next/navigation";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 type ProductionData = {
   date: number;
@@ -68,9 +60,10 @@ export default function SectionProductionPage() {
 
   const [products, setProducts] = useState<ProductWithStats[]>([]);
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
+  const [saving, setSaving] = useState<{ [key: string]: boolean }>({});
   const [message, setMessage] = useState({ type: "", text: "" });
-  const [edits, setEdits] = useState<Map<string, any>>(new Map());
+  const [savedFields, setSavedFields] = useState<Set<string>>(new Set());
+  const [failedFields, setFailedFields] = useState<Set<string>>(new Set());
   
   // নতুন স্টেট: কমপ্যাক্ট ভিউ টগল
   const [compactView, setCompactView] = useState(false);
@@ -78,6 +71,7 @@ export default function SectionProductionPage() {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const headerRef = useRef<HTMLDivElement>(null);
   const fixedColumnRef = useRef<HTMLDivElement>(null);
+  const inputRefs = useRef<{ [key: string]: HTMLInputElement | null }>({});
 
   const { year, month } = getPeriod();
   const monthName = [
@@ -161,96 +155,65 @@ export default function SectionProductionPage() {
     };
   };
 
-  // Debounced save functions using Firebase built-in methods
-  const debouncedSaveProduction = useCallback(
-    debounce(
-      async (
-        productId: string,
-        data: { batch: number; carton: number; date: number }[]
-      ) => {
-        try {
-          const productRef = doc(
-            db,
-            `production/${year}/months/${monthName}/products/${productId}`
-          );
-          await updateDoc(productRef, {
-            data: data,
-          });
-        } catch (error) {
-          console.error("Error auto-saving production:", error);
-          setMessage({
-            type: "error",
-            text: `সংরক্ষণ করতে ব্যর্থ: ${
-              error instanceof Error ? error.message : "অজানা সমস্যা"
-            }`,
-          });
-          hideMessage();
-        }
-      },
-      1000
-    ),
-    [year, monthName]
-  );
-
-  const debouncedSaveSummary = useCallback(
-    debounce(
-      async (productId: string, opening: number, sales_target: number) => {
-        try {
-          const production_target = Math.round(sales_target * 1.2);
-          const productRef = doc(
-            db,
-            `production/${year}/months/${monthName}/products/${productId}`
-          );
-          await updateDoc(productRef, {
-            opening,
-            sales_target,
-            production_target,
-          });
-        } catch (error) {
-          console.error("Error auto-saving summary:", error);
-          setMessage({
-            type: "error",
-            text: `সংরক্ষণ করতে ব্যর্থ: ${
-              error instanceof Error ? error.message : "অজানা সমস্যা"
-            }`,
-          });
-          hideMessage();
-        }
-      },
-      1000
-    ),
-    [year, monthName]
-  );
-
-  const debouncedSavePrice = useCallback(
-    debounce(async (productId: string, price: number) => {
-      try {
-        const productRef = doc(
-          db,
-          `production/${year}/months/${monthName}/products/${productId}`
-        );
-        await updateDoc(productRef, { price });
-      } catch (error) {
-        console.error("Error auto-saving price:", error);
-        setMessage({
-          type: "error",
-          text: `সংরক্ষণ করতে ব্যর্থ: ${
-            error instanceof Error ? error.message : "অজানা সমস্যা"
-          }`,
-        });
-        hideMessage();
-      }
-    }, 1000),
-    [year, monthName]
-  );
-
   const hideMessage = () => {
     setTimeout(() => {
       setMessage({ type: "", text: "" });
     }, 3000);
   };
 
-  // Load products for the section using Firebase built-in methods
+  // Show success feedback
+  const showSuccessFeedback = (fieldKey: string) => {
+    setSavedFields(prev => {
+      const newSet = new Set(prev);
+      newSet.add(fieldKey);
+      return newSet;
+    });
+
+    const inputElement = inputRefs.current[fieldKey];
+    if (inputElement) {
+      inputElement.classList.add("border-green-500", "bg-green-50");
+    }
+
+    setTimeout(() => {
+      setSavedFields(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(fieldKey);
+        return newSet;
+      });
+
+      if (inputElement) {
+        inputElement.classList.remove("border-green-500", "bg-green-50");
+      }
+    }, 1000);
+  };
+
+  // Show error feedback
+  const showErrorFeedback = (fieldKey: string) => {
+    setFailedFields(prev => {
+      const newSet = new Set(prev);
+      newSet.add(fieldKey);
+      return newSet;
+    });
+
+    const inputElement = inputRefs.current[fieldKey];
+    if (inputElement) {
+      inputElement.classList.add("border-red-500", "bg-red-50");
+    }
+
+    setTimeout(() => {
+      setFailedFields(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(fieldKey);
+        return newSet;
+      });
+
+      if (inputElement) {
+        inputElement.classList.remove("border-red-500", "bg-red-50");
+      }
+    }, 1000);
+  };
+
+  // Load products for the section
   const loadProducts = async () => {
     if (!sectionId) return;
 
@@ -292,11 +255,146 @@ export default function SectionProductionPage() {
     }
   };
 
-  // Handle production input change
+  // Update production data on blur
+  const updateProductionData = async (
+    productId: string,
+    date: number,
+    field: "batch" | "carton",
+    value: string
+  ) => {
+    const fieldKey = `${productId}-${date}-${field}`;
+    const numValue = parseInt(value) || 0;
+
+    try {
+      setSaving((prev) => ({ ...prev, [fieldKey]: true }));
+
+      // Update state immediately
+      setProducts((prev) =>
+        prev.map((item) => {
+          if (item.id === productId) {
+            const updatedData = item.data.map((prod, index) => {
+              if (index === date - 1) {
+                return { ...prod, [field]: numValue };
+              }
+              return prod;
+            });
+
+            const updatedProduct = {
+              ...item,
+              data: updatedData,
+            };
+
+            return {
+              ...updatedProduct,
+              stats: calculateProductStats(updatedProduct),
+            };
+          }
+          return item;
+        })
+      );
+
+      // Prepare data for Firebase
+      const productRef = doc(
+        db,
+        `production/${year}/months/${monthName}/products/${productId}`
+      );
+
+      const productDoc = await getDoc(productRef);
+      if (productDoc.exists()) {
+        const productData = productDoc.data();
+        const updatedData = productData.data.map((d: ProductionData, index: number) => {
+          if (index === date - 1) {
+            return { ...d, [field]: numValue };
+          }
+          return d;
+        });
+
+        await updateDoc(productRef, { data: updatedData });
+
+        // Show success feedback
+        showSuccessFeedback(fieldKey);
+      }
+    } catch (error) {
+      console.error("Error updating production:", error);
+      showErrorFeedback(fieldKey);
+    } finally {
+      setSaving((prev) => ({ ...prev, [fieldKey]: false }));
+    }
+  };
+
+  // Update summary data on blur
+  const updateSummaryData = async (
+    productId: string,
+    field: "opening" | "sales_target" | "price",
+    value: string
+  ) => {
+    const fieldKey = `${productId}-${field}`;
+    const numValue = parseInt(value) || 0;
+
+    try {
+      setSaving((prev) => ({ ...prev, [fieldKey]: true }));
+
+      // Update state immediately
+      setProducts((prev) =>
+        prev.map((item) => {
+          if (item.id === productId) {
+            let updatedProduct: Product;
+
+            if (field === "price") {
+              updatedProduct = { ...item, price: numValue };
+            } else if (field === "opening") {
+              updatedProduct = { ...item, opening: numValue };
+            } else {
+              const production_target = Math.round(numValue * 1.2);
+              updatedProduct = {
+                ...item,
+                sales_target: numValue,
+                production_target,
+              };
+            }
+
+            return {
+              ...updatedProduct,
+              stats: calculateProductStats(updatedProduct),
+            };
+          }
+          return item;
+        })
+      );
+
+      // Update in Firebase
+      const productRef = doc(
+        db,
+        `production/${year}/months/${monthName}/products/${productId}`
+      );
+
+      const updateData: any = {};
+      if (field === "price") {
+        updateData.price = numValue;
+      } else if (field === "opening") {
+        updateData.opening = numValue;
+      } else {
+        updateData.sales_target = numValue;
+        updateData.production_target = Math.round(numValue * 1.2);
+      }
+
+      await updateDoc(productRef, updateData);
+
+      // Show success feedback
+      showSuccessFeedback(fieldKey);
+    } catch (error) {
+      console.error(`Error updating ${field}:`, error);
+      showErrorFeedback(fieldKey);
+    } finally {
+      setSaving((prev) => ({ ...prev, [fieldKey]: false }));
+    }
+  };
+
+  // Handle production input change (for immediate UI update)
   const handleProductionChange = (
     productId: string,
     date: number,
-    field: keyof ProductionData,
+    field: "batch" | "carton",
     value: string
   ) => {
     const numValue = parseInt(value) || 0;
@@ -324,41 +422,12 @@ export default function SectionProductionPage() {
         return item;
       })
     );
-
-    const product = products.find((p) => p.id === productId);
-
-    if (product) {
-      const production = product.data[date - 1];
-      const batchValue = field === "batch" ? numValue : production?.batch || 0;
-      const cartonValue =
-        field === "carton" ? numValue : production?.carton || 0;
-      const data = product.data.map((d) => {
-        return d.date === date
-          ? { ...d, batch: batchValue, carton: cartonValue }
-          : d;
-      });
-      debouncedSaveProduction(productId, data);
-    }
-
-    const key = `production-${productId}-${date}`;
-    const currentEdits = edits.get(key) || { batch: 0, carton: 0 };
-    const newEdits = { ...currentEdits, [field]: numValue };
-
-    setEdits((prev) => new Map(prev.set(key, newEdits)));
-
-    setTimeout(() => {
-      setEdits((prev) => {
-        const newMap = new Map(prev);
-        newMap.delete(key);
-        return newMap;
-      });
-    }, 2000);
   };
 
-  // Handle summary input change
+  // Handle summary input change (for immediate UI update)
   const handleSummaryChange = (
     productId: string,
-    field: "opening" | "sales_target",
+    field: "opening" | "sales_target" | "price",
     value: string
   ) => {
     const numValue = parseInt(value) || 0;
@@ -368,11 +437,10 @@ export default function SectionProductionPage() {
         if (item.id === productId) {
           let updatedProduct: Product;
 
-          if (field === "opening") {
-            updatedProduct = {
-              ...item,
-              opening: numValue,
-            };
+          if (field === "price") {
+            updatedProduct = { ...item, price: numValue };
+          } else if (field === "opening") {
+            updatedProduct = { ...item, opening: numValue };
           } else {
             const production_target = Math.round(numValue * 1.2);
             updatedProduct = {
@@ -390,152 +458,36 @@ export default function SectionProductionPage() {
         return item;
       })
     );
-
-    const product = products.find((p) => p.id === productId);
-    if (product) {
-      const opening = field === "opening" ? numValue : product.opening;
-      const sales_target =
-        field === "sales_target" ? numValue : product.sales_target;
-
-      debouncedSaveSummary(productId, opening, sales_target);
-    }
-
-    const key = `summary-${productId}-${field}`;
-    setEdits(
-      (prev) =>
-        new Map(
-          prev.set(key, {
-            type: "summary",
-            productId,
-            field,
-            value: numValue,
-          })
-        )
-    );
-
-    setTimeout(() => {
-      setEdits((prev) => {
-        const newMap = new Map(prev);
-        newMap.delete(key);
-        return newMap;
-      });
-    }, 1500);
   };
 
-  // Handle price change
-  const handlePriceChange = (productId: string, value: string) => {
-    const numValue = parseInt(value) || 0;
-
-    setProducts((prev) =>
-      prev.map((item) => {
-        if (item.id === productId) {
-          return {
-            ...item,
-            price: numValue,
-          };
-        }
-        return item;
-      })
-    );
-
-    const key = `price-${productId}`;
-    setEdits(
-      (prev) =>
-        new Map(
-          prev.set(key, {
-            type: "price",
-            productId,
-            value: numValue,
-          })
-        )
-    );
-
-    debouncedSavePrice(productId, numValue);
-
-    setTimeout(() => {
-      setEdits((prev) => {
-        const newMap = new Map(prev);
-        newMap.delete(key);
-        return newMap;
-      });
-    }, 1500);
-  };
-
-  // Save all pending changes
+  // Save all changes (for manual save button)
   const saveAll = async () => {
-    if (edits.size === 0) {
-      setMessage({ type: "info", text: "সংরক্ষণ করার কোনো পরিবর্তন নেই" });
-      hideMessage();
-      return;
-    }
-
-    setSaving(true);
-    const savePromises: Promise<void>[] = [];
-
-    edits.forEach((edit, key) => {
-      if (key.startsWith("production-")) {
-        const [, productId, date] = key.split("-");
-        const productionEdit = edit;
-        const productRef = doc(
-          db,
-          `production/${year}/months/${monthName}/products/${productId}`
-        );
-
-        savePromises.push(
-          updateDoc(productRef, {
-            [`data.${parseInt(date) - 1}.batch`]: productionEdit.batch || 0,
-            [`data.${parseInt(date) - 1}.carton`]: productionEdit.carton || 0,
-          })
-        );
-      } else if (key.startsWith("summary-")) {
-        const product = products.find((p) => p.id === edit.productId);
-        if (product) {
-          const productRef = doc(
-            db,
-            `production/${year}/months/${monthName}/products/${edit.productId}`
-          );
-
-          savePromises.push(
-            updateDoc(productRef, {
-              opening: product.opening,
-              sales_target: product.sales_target,
-              production_target: Math.round(product.sales_target * 1.2),
-            })
-          );
-        }
-      } else if (key.startsWith("price-")) {
-        const productRef = doc(
-          db,
-          `production/${year}/months/${monthName}/products/${edit.productId}`
-        );
-
-        savePromises.push(updateDoc(productRef, { price: edit.value }));
-      }
+    setMessage({
+      type: "success",
+      text: "সব পরিবর্তন রিয়েল-টাইমে সেভ করা হয়েছে!",
     });
+    hideMessage();
+  };
 
-    try {
-      await Promise.all(savePromises);
-      setMessage({
-        type: "success",
-        text: `${edits.size} টি রেকর্ড সফলভাবে সংরক্ষণ করা হয়েছে`,
-      });
-      setEdits(new Map());
-      await loadProducts();
-    } catch (error) {
-      console.error("Error saving all:", error);
-      setMessage({
-        type: "error",
-        text: `কিছু রেকর্ড সংরক্ষণ করতে ব্যর্থ: ${
-          error instanceof Error ? error.message : "অজানা সমস্যা"
-        }`,
-      });
-    } finally {
-      setSaving(false);
-      hideMessage();
+  // Handle Enter key press
+  const handleKeyPress = (
+    e: React.KeyboardEvent,
+    callback: () => void,
+    nextFieldId?: string
+  ) => {
+    if (e.key === "Enter") {
+      callback();
+      
+      // Move focus to next input if specified
+      if (nextFieldId) {
+        const nextInput = inputRefs.current[nextFieldId];
+        if (nextInput) {
+          nextInput.focus();
+        }
+      }
     }
   };
 
-  // Get day name in Bengali
   const getDayName = (day: number) => {
     const date = new Date(year, month - 1, day);
     const dayOfWeek = date.getDay();
@@ -551,14 +503,12 @@ export default function SectionProductionPage() {
     return banglaDays[dayOfWeek];
   };
 
-  // Check if day is weekend (Friday)
   const isWeekend = (day: number) => {
     const date = new Date(year, month - 1, day);
     const dayOfWeek = date.getDay();
-    return dayOfWeek === 5; // Friday (শুক্রবার)
+    return dayOfWeek === 5;
   };
 
-  // Check if day is today
   const isToday = (day: number) => {
     const today = new Date();
     return (
@@ -568,7 +518,6 @@ export default function SectionProductionPage() {
     );
   };
 
-  // Calculate column totals
   const getColumnTotal = (dayIndex: number, field: keyof ProductionData) => {
     return products.reduce((total, product) => {
       const prod = product.data[dayIndex];
@@ -576,7 +525,6 @@ export default function SectionProductionPage() {
     }, 0);
   };
 
-  // Calculate section totals
   const calculateSectionTotals = () => {
     const totals = {
       production_target: 0,
@@ -614,19 +562,10 @@ export default function SectionProductionPage() {
   const sectionTotals = calculateSectionTotals();
   const sectionName = getBanglaSectionName(sectionId);
 
-  // Load products on mount and when sectionId changes
+  // Load products on mount
   useEffect(() => {
     loadProducts();
   }, [sectionId]);
-
-  // Cleanup debounced functions on unmount
-  useEffect(() => {
-    return () => {
-      debouncedSaveProduction.cancel();
-      debouncedSaveSummary.cancel();
-      debouncedSavePrice.cancel();
-    };
-  }, [debouncedSaveProduction, debouncedSaveSummary, debouncedSavePrice]);
 
   // Sync scroll between header and content
   useEffect(() => {
@@ -643,7 +582,7 @@ export default function SectionProductionPage() {
     }
   }, []);
 
-  // Sync vertical scroll between fixed column and content
+  // Sync vertical scroll
   useEffect(() => {
     const scrollContainer = scrollContainerRef.current;
     const fixedColumn = fixedColumnRef.current;
@@ -659,7 +598,7 @@ export default function SectionProductionPage() {
     }
   }, []);
 
-  // Constants for consistent heights - কমপ্যাক্ট ভিউতে হাইট কমবে
+  // Constants for consistent heights
   const ROW_HEIGHT = compactView ? 50 : 190;
   const HEADER_HEIGHT = compactView ? 80 : 120;
 
@@ -798,28 +737,14 @@ export default function SectionProductionPage() {
             <div className="flex flex-col gap-3">
               <button
                 onClick={saveAll}
-                disabled={saving || edits.size === 0}
-                className={`px-6 py-3 rounded-xl font-semibold flex items-center justify-center gap-3 ${
-                  saving || edits.size === 0
-                    ? "bg-gray-200 text-gray-500 cursor-not-allowed"
-                    : "bg-linear-to-r from-blue-600 to-blue-700 text-white hover:from-blue-700 hover:to-blue-800 hover:shadow-lg"
-                }`}
+                className="px-6 py-3 rounded-xl font-semibold flex items-center justify-center gap-3 bg-linear-to-r from-blue-600 to-blue-700 text-white hover:from-blue-700 hover:to-blue-800 hover:shadow-lg"
               >
-                {saving ? (
-                  <>
-                    <Loader2 className="h-5 w-5 animate-spin" />
-                    সংরক্ষণ হচ্ছে...
-                  </>
-                ) : (
-                  <>
-                    <Save className="h-5 w-5" />
-                    সব পরিবর্তন সংরক্ষণ করুন ({edits.size})
-                  </>
-                )}
+                <Save className="h-5 w-5" />
+                সব পরিবর্তন সংরক্ষণ করুন
               </button>
 
               <div className="text-sm text-gray-500 text-center">
-                ⓘ প্রতিটি পরিবর্তন স্বয়ংক্রিয়ভাবে সেভ হয়
+                ⓘ প্রতিটি পরিবর্তন onBlur/Enter এ স্বয়ংক্রিয়ভাবে সেভ হয়
               </div>
             </div>
           </div>
@@ -923,63 +848,136 @@ export default function SectionProductionPage() {
                             </div>
                           </div>
 
-                          {/* Summary Inputs - কমপ্যাক্ট ভিউতে শুধু নাম দেখাবে */}
+                          {/* Summary Inputs */}
                           {!compactView && (
                             <>
                               <div className="grid grid-cols-4 gap-2 mb-3">
-                                <div>
+                                {/* Price Input */}
+                                <div className="relative">
                                   <label className="block text-xs text-gray-500 mb-1">
                                     মূল্য
                                   </label>
                                   <input
+                                    ref={(el) => {
+                                      inputRefs.current[`${product.id}-price`] = el;
+                                    }}
                                     type="number"
                                     value={product.price || 0}
                                     onChange={(e) =>
-                                      handlePriceChange(product.id, e.target.value)
+                                      handleSummaryChange(product.id, "price", e.target.value)
                                     }
-                                    className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                    onBlur={(e) =>
+                                      updateSummaryData(product.id, "price", e.target.value)
+                                    }
+                                    onKeyPress={(e) =>
+                                      handleKeyPress(
+                                        e,
+                                        () => updateSummaryData(product.id, "price", e.currentTarget.value),
+                                        `${product.id}-opening`
+                                      )
+                                    }
+                                    className={`w-full px-2 py-1.5 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all ${
+                                      savedFields.has(`${product.id}-price`)
+                                        ? "border-green-500 bg-green-50"
+                                        : failedFields.has(`${product.id}-price`)
+                                        ? "border-red-500 bg-red-50"
+                                        : "border-gray-300"
+                                    }`}
                                     min="0"
                                     placeholder="৳"
+                                    disabled={saving[`${product.id}-price`]}
                                   />
+                                  {saving[`${product.id}-price`] && (
+                                    <div className="absolute top-1/2 right-2 -translate-y-1/2">
+                                      <Loader2 className="h-3 w-3 animate-spin text-blue-600" />
+                                    </div>
+                                  )}
                                 </div>
-                                <div>
+
+                                {/* Opening Input */}
+                                <div className="relative">
                                   <label className="block text-xs text-gray-500 mb-1">
                                     উদ্বোধনী
                                   </label>
                                   <input
+                                    ref={(el) => {
+                                      inputRefs.current[`${product.id}-opening`] = el;
+                                    }}
                                     type="number"
                                     value={product.opening || 0}
                                     onChange={(e) =>
-                                      handleSummaryChange(
-                                        product.id,
-                                        "opening",
-                                        e.target.value
+                                      handleSummaryChange(product.id, "opening", e.target.value)
+                                    }
+                                    onBlur={(e) =>
+                                      updateSummaryData(product.id, "opening", e.target.value)
+                                    }
+                                    onKeyPress={(e) =>
+                                      handleKeyPress(
+                                        e,
+                                        () => updateSummaryData(product.id, "opening", e.currentTarget.value),
+                                        `${product.id}-sales_target`
                                       )
                                     }
-                                    className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                    className={`w-full px-2 py-1.5 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all ${
+                                      savedFields.has(`${product.id}-opening`)
+                                        ? "border-green-500 bg-green-50"
+                                        : failedFields.has(`${product.id}-opening`)
+                                        ? "border-red-500 bg-red-50"
+                                        : "border-gray-300"
+                                    }`}
                                     min="0"
                                     placeholder="0"
+                                    disabled={saving[`${product.id}-opening`]}
                                   />
+                                  {saving[`${product.id}-opening`] && (
+                                    <div className="absolute top-1/2 right-2 -translate-y-1/2">
+                                      <Loader2 className="h-3 w-3 animate-spin text-blue-600" />
+                                    </div>
+                                  )}
                                 </div>
-                                <div>
+
+                                {/* Sales Target Input */}
+                                <div className="relative">
                                   <label className="block text-xs text-gray-500 mb-1">
                                     বিক্রয় লক্ষ্য
                                   </label>
                                   <input
+                                    ref={(el) => {
+                                      inputRefs.current[`${product.id}-sales_target`] = el;
+                                    }}
                                     type="number"
                                     value={product.sales_target || 0}
                                     onChange={(e) =>
-                                      handleSummaryChange(
-                                        product.id,
-                                        "sales_target",
-                                        e.target.value
+                                      handleSummaryChange(product.id, "sales_target", e.target.value)
+                                    }
+                                    onBlur={(e) =>
+                                      updateSummaryData(product.id, "sales_target", e.target.value)
+                                    }
+                                    onKeyPress={(e) =>
+                                      handleKeyPress(
+                                        e,
+                                        () => updateSummaryData(product.id, "sales_target", e.currentTarget.value)
                                       )
                                     }
-                                    className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                    className={`w-full px-2 py-1.5 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all ${
+                                      savedFields.has(`${product.id}-sales_target`)
+                                        ? "border-green-500 bg-green-50"
+                                        : failedFields.has(`${product.id}-sales_target`)
+                                        ? "border-red-500 bg-red-50"
+                                        : "border-gray-300"
+                                    }`}
                                     min="0"
                                     placeholder="0"
+                                    disabled={saving[`${product.id}-sales_target`]}
                                   />
+                                  {saving[`${product.id}-sales_target`] && (
+                                    <div className="absolute top-1/2 right-2 -translate-y-1/2">
+                                      <Loader2 className="h-3 w-3 animate-spin text-blue-600" />
+                                    </div>
+                                  )}
                                 </div>
+
+                                {/* Production Target Display */}
                                 <div>
                                   <label className="block text-xs text-gray-500 mb-1">
                                     উৎপাদন লক্ষ্য
@@ -990,7 +988,7 @@ export default function SectionProductionPage() {
                                 </div>
                               </div>
 
-                              {/* Progress Bar - কমপ্যাক্ট ভিউতে দেখাবে না */}
+                              {/* Progress Bar */}
                               <div className="mt-2">
                                 <div className="flex justify-between text-xs mb-1">
                                   <span className="text-gray-600">
@@ -1086,7 +1084,7 @@ export default function SectionProductionPage() {
                           </>
                         )}
                         <div className="flex justify-between items-center">
-                          <span className="text-sm text-gray-600 ">
+                          <span className="text-sm text-gray-600">
                             মোট উৎপাদন
                           </span>
                           <span className="font-semibold text-gray-900">
@@ -1246,7 +1244,7 @@ export default function SectionProductionPage() {
                                 <div className="flex w-full">
                                   {/* Batch Input */}
                                   <div
-                                    className={`flex-1 border-r border-gray-200 ${
+                                    className={`flex-1 border-r border-gray-200 relative ${
                                       isWeekendDay
                                         ? "bg-red-50"
                                         : isTodayDay
@@ -1255,6 +1253,9 @@ export default function SectionProductionPage() {
                                     }`}
                                   >
                                     <input
+                                      ref={(el) => {
+                                        inputRefs.current[`${product.id}-${day}-batch`] = el;
+                                      }}
                                       type="number"
                                       value={prod.batch || 0}
                                       onChange={(e) =>
@@ -1265,21 +1266,53 @@ export default function SectionProductionPage() {
                                           e.target.value
                                         )
                                       }
-                                      className={`text-sm w-full h-full text-center border-none focus:outline-none focus:ring-2 focus:ring-blue-500 bg-transparent ${
+                                      onBlur={(e) =>
+                                        updateProductionData(
+                                          product.id,
+                                          day,
+                                          "batch",
+                                          e.target.value
+                                        )
+                                      }
+                                      onKeyPress={(e) =>
+                                        handleKeyPress(
+                                          e,
+                                          () => updateProductionData(
+                                            product.id,
+                                            day,
+                                            "batch",
+                                            e.currentTarget.value
+                                          ),
+                                          `${product.id}-${day}-carton`
+                                        )
+                                      }
+                                      className={`text-sm w-full h-full text-center focus:outline-none focus:ring-2 focus:ring-blue-500 bg-transparent transition-all ${
                                         isWeekendDay
                                           ? "placeholder-red-300"
                                           : isTodayDay
                                           ? "placeholder-green-300"
                                           : "placeholder-gray-300"
+                                      } ${
+                                        savedFields.has(`${product.id}-${day}-batch`)
+                                          ? "border-green-500 bg-green-50"
+                                          : failedFields.has(`${product.id}-${day}-batch`)
+                                          ? "border-red-500 bg-red-50"
+                                          : "border-none"
                                       }`}
                                       min="0"
                                       placeholder="0"
+                                      disabled={saving[`${product.id}-${day}-batch`]}
                                     />
+                                    {saving[`${product.id}-${day}-batch`] && (
+                                      <div className="absolute top-1/2 right-2 -translate-y-1/2">
+                                        <Loader2 className="h-3 w-3 animate-spin text-blue-600" />
+                                      </div>
+                                    )}
                                   </div>
 
                                   {/* Carton Input */}
                                   <div
-                                    className={`flex-1 ${
+                                    className={`flex-1 relative ${
                                       isWeekendDay
                                         ? "bg-red-50"
                                         : isTodayDay
@@ -1288,6 +1321,9 @@ export default function SectionProductionPage() {
                                     }`}
                                   >
                                     <input
+                                      ref={(el) => {
+                                        inputRefs.current[`${product.id}-${day}-carton`] = el;
+                                      }}
                                       type="number"
                                       value={prod.carton || 0}
                                       onChange={(e) =>
@@ -1298,16 +1334,54 @@ export default function SectionProductionPage() {
                                           e.target.value
                                         )
                                       }
-                                      className={`text-sm w-full h-full text-center border-none focus:outline-none focus:ring-2 focus:ring-blue-500 bg-transparent ${
+                                      onBlur={(e) =>
+                                        updateProductionData(
+                                          product.id,
+                                          day,
+                                          "carton",
+                                          e.target.value
+                                        )
+                                      }
+                                      onKeyPress={(e) => {
+                                        if (e.key === "Enter") {
+                                          updateProductionData(
+                                            product.id,
+                                            day,
+                                            "carton",
+                                            e.currentTarget.value
+                                          );
+                                          // Focus to next day's batch input
+                                          const nextDay = day + 1;
+                                          if (nextDay <= lastDay) {
+                                            const nextInput = inputRefs.current[`${product.id}-${nextDay}-batch`];
+                                            if (nextInput) {
+                                              nextInput.focus();
+                                            }
+                                          }
+                                        }
+                                      }}
+                                      className={`text-sm w-full h-full text-center focus:outline-none focus:ring-2 focus:ring-blue-500 bg-transparent transition-all ${
                                         isWeekendDay
                                           ? "placeholder-red-300"
                                           : isTodayDay
                                           ? "placeholder-green-300"
                                           : "placeholder-gray-300"
+                                      } ${
+                                        savedFields.has(`${product.id}-${day}-carton`)
+                                          ? "border-green-500 bg-green-50"
+                                          : failedFields.has(`${product.id}-${day}-carton`)
+                                          ? "border-red-500 bg-red-50"
+                                          : "border-none"
                                       }`}
                                       min="0"
                                       placeholder="0"
+                                      disabled={saving[`${product.id}-${day}-carton`]}
                                     />
+                                    {saving[`${product.id}-${day}-carton`] && (
+                                      <div className="absolute top-1/2 right-2 -translate-y-1/2">
+                                        <Loader2 className="h-3 w-3 animate-spin text-blue-600" />
+                                      </div>
+                                    )}
                                   </div>
                                 </div>
                               </div>
@@ -1401,19 +1475,56 @@ export default function SectionProductionPage() {
           )}
         </div>
 
-        {/* Footer Help Text */}
-        <div className="mt-6 text-center">
-          <div className="inline-flex items-center gap-3 text-sm text-gray-600 bg-gray-50 px-4 py-3 rounded-xl border border-gray-200">
-            <Info className="h-4 w-4 text-blue-500" />
-            <span className="">
-              টিপ: {compactView ? "শুধু প্রোডাক্ট নাম দেখানো হচ্ছে।" : "সম্পূর্ণ বিবরণ দেখানো হচ্ছে।"} 
-              <button 
-                onClick={() => setCompactView(!compactView)}
-                className="ml-2 text-blue-600 hover:text-blue-800 font-medium underline"
-              >
-                {compactView ? "সম্পূর্ণ ভিউ দেখুন" : "কমপ্যাক্ট ভিউ দেখুন"}
-              </button>
-            </span>
+        {/* Legend Section */}
+        <div className="mt-6 pt-6 border-t border-gray-200">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+              <div className="flex items-center gap-2 mb-2">
+                <Loader2 className="h-4 w-4 animate-spin text-blue-600" />
+                <span className="font-medium text-blue-800">
+                  লোডিং এনিমেশন
+                </span>
+              </div>
+              <p className="text-sm text-blue-600">
+                সংরক্ষণ চলাকালীন স্পিনার দেখায়
+              </p>
+            </div>
+
+            <div className="bg-green-50 p-4 rounded-lg border border-green-200">
+              <div className="flex items-center gap-2 mb-2">
+                <div className="w-3 h-3 bg-green-500 rounded"></div>
+                <span className="font-medium text-green-800">
+                  সফল সংরক্ষণ
+                </span>
+              </div>
+              <p className="text-sm text-green-600">
+                সবুজ বর্ডার ও ব্যাকগ্রাউন্ড দেখায়
+              </p>
+            </div>
+
+            <div className="bg-red-50 p-4 rounded-lg border border-red-200">
+              <div className="flex items-center gap-2 mb-2">
+                <div className="w-3 h-3 bg-red-500 rounded"></div>
+                <span className="font-medium text-red-800">
+                  সংরক্ষণ ব্যর্থ
+                </span>
+              </div>
+              <p className="text-sm text-red-600">
+                লাল বর্ডার ও ব্যাকগ্রাউন্ড দেখায়
+              </p>
+            </div>
+
+            <div className="bg-purple-50 p-4 rounded-lg border border-purple-200">
+              <div className="flex items-center gap-2 mb-2">
+                <CheckCircle className="h-4 w-4 text-purple-600" />
+                <span className="font-medium text-purple-800">
+                  রিয়েল-টাইম আপডেট
+                </span>
+              </div>
+              <p className="text-sm text-purple-600">
+                onBlur/Enter এ স্বয়ংক্রিয়ভাবে সেভ হয়
+              </p>
+            </div>
           </div>
         </div>
       </div>
