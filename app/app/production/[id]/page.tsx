@@ -17,6 +17,8 @@ import {
   CalendarDays,
   CheckCircle,
   DollarSign,
+  Eye,
+  EyeOff,
   Factory,
   Hash,
   Info,
@@ -69,6 +71,9 @@ export default function SectionProductionPage() {
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState({ type: "", text: "" });
   const [edits, setEdits] = useState<Map<string, any>>(new Map());
+  
+  // নতুন স্টেট: কমপ্যাক্ট ভিউ টগল
+  const [compactView, setCompactView] = useState(false);
 
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const headerRef = useRef<HTMLDivElement>(null);
@@ -654,13 +659,13 @@ export default function SectionProductionPage() {
     }
   }, []);
 
-  // Constants for consistent heights
-  const ROW_HEIGHT = 190;
-  const HEADER_HEIGHT = 120;
+  // Constants for consistent heights - কমপ্যাক্ট ভিউতে হাইট কমবে
+  const ROW_HEIGHT = compactView ? 50 : 190;
+  const HEADER_HEIGHT = compactView ? 80 : 120;
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-linear-to-br from-blue-50 to-gray-50 flex items-center justify-center p-4 font-[family-name:var(--font-tiro-bangla)]">
+      <div className="min-h-screen bg-linear-to-br from-blue-50 to-gray-50 flex items-center justify-center p-4 font-(family-name:--font-tiro-bangla)">
         <div className="text-center space-y-6">
           <div className="relative">
             <div className="w-20 h-20 mx-auto rounded-full bg-linear-to-r from-blue-500 to-blue-600 animate-pulse flex items-center justify-center">
@@ -686,22 +691,46 @@ export default function SectionProductionPage() {
   }
 
   return (
-    <div className="bg-linear-to-br from-blue-50 to-gray-50 p-4 md:p-6 font-[family-name:var(--font-tiro-bangla)]">
+    <div className="bg-linear-to-br from-blue-50 to-gray-50 p-4 md:p-6 font-(family-name:--font-tiro-bangla)">
       <div className="max-w-full mx-auto">
         {/* Header Section */}
         <div className="mb-8">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="bg-linear-to-r from-blue-600 to-blue-700 p-3 rounded-xl">
-              <Factory className="h-8 w-8 text-white" />
+          <div className="flex items-center justify-between gap-3 mb-4">
+            <div className="flex items-center gap-3">
+              <div className="bg-linear-to-r from-blue-600 to-blue-700 p-3 rounded-xl">
+                <Factory className="h-8 w-8 text-white" />
+              </div>
+              <div>
+                <h1 className="text-3xl font-bold text-gray-800">
+                  {sectionName} - প্রোডাকশন
+                </h1>
+                <p className="text-gray-600">
+                  {banglaMonthName} {year} - দৈনিক উৎপাদন এন্ট্রি ও ব্যবস্থাপনা
+                </p>
+              </div>
             </div>
-            <div>
-              <h1 className="text-3xl font-bold text-gray-800">
-                {sectionName} - প্রোডাকশন
-              </h1>
-              <p className="text-gray-600">
-                {banglaMonthName} {year} - দৈনিক উৎপাদন এন্ট্রি ও ব্যবস্থাপনা
-              </p>
-            </div>
+            
+            {/* কমপ্যাক্ট ভিউ টগল বাটন */}
+            <button
+              onClick={() => setCompactView(!compactView)}
+              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-medium transition-all duration-200 ${
+                compactView 
+                  ? "bg-linear-to-r from-blue-600 to-blue-700 text-white" 
+                  : "bg-gray-200 text-gray-800 hover:bg-gray-300"
+              }`}
+            >
+              {compactView ? (
+                <>
+                  <Eye className="h-5 w-5" />
+                  সম্পূর্ণ ভিউ
+                </>
+              ) : (
+                <>
+                  <EyeOff className="h-5 w-5" />
+                  কমপ্যাক্ট ভিউ
+                </>
+              )}
+            </button>
           </div>
         </div>
 
@@ -731,7 +760,7 @@ export default function SectionProductionPage() {
                       প্রোডাক্ট
                     </p>
                     <p className="font-semibold text-green-700">
-                      {products.length} টি
+                      {products.length.toLocaleString("bn-BD")} টি
                     </p>
                   </div>
                 </div>
@@ -852,9 +881,11 @@ export default function SectionProductionPage() {
                         <h3 className="font-bold text-gray-800">
                           প্রোডাক্ট ও লক্ষ্যমাত্রা
                         </h3>
-                        <p className="text-sm text-gray-600">
-                          মূল্য | উদ্বোধনী | বিক্রয় লক্ষ্য | উৎপাদন লক্ষ্য
-                        </p>
+                        {!compactView && (
+                          <p className="text-sm text-gray-600">
+                            মূল্য | উদ্বোধনী | বিক্রয় লক্ষ্য | উৎপাদন লক্ষ্য
+                          </p>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -875,138 +906,144 @@ export default function SectionProductionPage() {
                           {/* Product Name */}
                           <div className="flex items-start justify-between mb-3">
                             <div>
-                              <h4 className="text-sm font-semibold text-gray-900">
+                              <h4 className={`${compactView ? 'text-sm font-bold' : 'text-sm font-semibold'} text-gray-900`}>
                                 {product.name}
                               </h4>
-                              <div className="flex items-center gap-2 mt-1">
-                                <div className="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded">
-                                  <Hash className="inline h-3 w-3 mr-1" />{" "}
-                                  {product.code}
+                              {!compactView && (
+                                <div className="flex items-center gap-2 mt-1">
+                                  <div className="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded">
+                                    <Hash className="inline h-3 w-3 mr-1" />{" "}
+                                    {product.code}
+                                  </div>
+                                  <div className="text-xs text-gray-500 bg-blue-100 px-2 py-0.5 rounded">
+                                    {product.sku}
+                                  </div>
                                 </div>
-                                <div className="text-xs text-gray-500 bg-blue-100 px-2 py-0.5 rounded">
-                                  {product.sku}
-                                </div>
-                              </div>
+                              )}
                             </div>
                           </div>
 
-                          {/* Summary Inputs */}
-                          <div className="grid grid-cols-4 gap-2 mb-3">
-                            <div>
-                              <label className="block text-xs text-gray-500 mb-1">
-                                মূল্য
-                              </label>
-                              <input
-                                type="number"
-                                value={product.price || 0}
-                                onChange={(e) =>
-                                  handlePriceChange(product.id, e.target.value)
-                                }
-                                className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                min="0"
-                                placeholder="৳"
-                              />
-                            </div>
-                            <div>
-                              <label className="block text-xs text-gray-500 mb-1">
-                                উদ্বোধনী
-                              </label>
-                              <input
-                                type="number"
-                                value={product.opening || 0}
-                                onChange={(e) =>
-                                  handleSummaryChange(
-                                    product.id,
-                                    "opening",
-                                    e.target.value
-                                  )
-                                }
-                                className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                min="0"
-                                placeholder="0"
-                              />
-                            </div>
-                            <div>
-                              <label className="block text-xs text-gray-500 mb-1">
-                                বিক্রয় লক্ষ্য
-                              </label>
-                              <input
-                                type="number"
-                                value={product.sales_target || 0}
-                                onChange={(e) =>
-                                  handleSummaryChange(
-                                    product.id,
-                                    "sales_target",
-                                    e.target.value
-                                  )
-                                }
-                                className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                min="0"
-                                placeholder="0"
-                              />
-                            </div>
-                            <div>
-                              <label className="block text-xs text-gray-500 mb-1">
-                                উৎপাদন লক্ষ্য
-                              </label>
-                              <div className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-lg bg-gray-50 text-center font-medium">
-                                {product.production_target || 0}
+                          {/* Summary Inputs - কমপ্যাক্ট ভিউতে শুধু নাম দেখাবে */}
+                          {!compactView && (
+                            <>
+                              <div className="grid grid-cols-4 gap-2 mb-3">
+                                <div>
+                                  <label className="block text-xs text-gray-500 mb-1">
+                                    মূল্য
+                                  </label>
+                                  <input
+                                    type="number"
+                                    value={product.price || 0}
+                                    onChange={(e) =>
+                                      handlePriceChange(product.id, e.target.value)
+                                    }
+                                    className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                    min="0"
+                                    placeholder="৳"
+                                  />
+                                </div>
+                                <div>
+                                  <label className="block text-xs text-gray-500 mb-1">
+                                    উদ্বোধনী
+                                  </label>
+                                  <input
+                                    type="number"
+                                    value={product.opening || 0}
+                                    onChange={(e) =>
+                                      handleSummaryChange(
+                                        product.id,
+                                        "opening",
+                                        e.target.value
+                                      )
+                                    }
+                                    className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                    min="0"
+                                    placeholder="0"
+                                  />
+                                </div>
+                                <div>
+                                  <label className="block text-xs text-gray-500 mb-1">
+                                    বিক্রয় লক্ষ্য
+                                  </label>
+                                  <input
+                                    type="number"
+                                    value={product.sales_target || 0}
+                                    onChange={(e) =>
+                                      handleSummaryChange(
+                                        product.id,
+                                        "sales_target",
+                                        e.target.value
+                                      )
+                                    }
+                                    className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                    min="0"
+                                    placeholder="0"
+                                  />
+                                </div>
+                                <div>
+                                  <label className="block text-xs text-gray-500 mb-1">
+                                    উৎপাদন লক্ষ্য
+                                  </label>
+                                  <div className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-lg bg-gray-50 text-center font-medium">
+                                    {product.production_target || 0}
+                                  </div>
+                                </div>
                               </div>
-                            </div>
-                          </div>
 
-                          {/* Progress Bar */}
-                          <div className="mt-2">
-                            <div className="flex justify-between text-xs mb-1">
-                              <span className="text-gray-600">
-                                অগ্রগতি: {stats.total_production}/
-                                {stats.floor_production_target}
-                              </span>
-                              <span
-                                className={`font-semibold ${
-                                  stats.completion_percentage >= 100
-                                    ? "text-green-600"
-                                    : stats.completion_percentage >= 70
-                                    ? "text-blue-600"
-                                    : stats.completion_percentage >= 40
-                                    ? "text-yellow-600"
-                                    : "text-red-600"
-                                }`}
-                              >
-                                {stats.completion_percentage}%
-                              </span>
-                            </div>
-                            <div className="w-full bg-gray-200 rounded-full h-2">
-                              <div
-                                className="h-2 rounded-full transition-all duration-500"
-                                style={{
-                                  width: `${Math.min(
-                                    stats.completion_percentage,
-                                    100
-                                  )}%`,
-                                  backgroundColor:
-                                    stats.completion_percentage >= 100
-                                      ? "#10b981"
-                                      : stats.completion_percentage >= 70
-                                      ? "#3b82f6"
-                                      : stats.completion_percentage >= 40
-                                      ? "#f59e0b"
-                                      : "#ef4444",
-                                }}
-                              ></div>
-                            </div>
-                            <div className="grid grid-cols-3 gap-1 text-[10px] text-gray-500 mt-1">
-                              <div className="text-center">
-                                উৎপাদন: {stats.total_production}
+                              {/* Progress Bar - কমপ্যাক্ট ভিউতে দেখাবে না */}
+                              <div className="mt-2">
+                                <div className="flex justify-between text-xs mb-1">
+                                  <span className="text-gray-600">
+                                    অগ্রগতি: {stats.total_production}/
+                                    {stats.floor_production_target}
+                                  </span>
+                                  <span
+                                    className={`font-semibold ${
+                                      stats.completion_percentage >= 100
+                                        ? "text-green-600"
+                                        : stats.completion_percentage >= 70
+                                        ? "text-blue-600"
+                                        : stats.completion_percentage >= 40
+                                        ? "text-yellow-600"
+                                        : "text-red-600"
+                                    }`}
+                                  >
+                                    {stats.completion_percentage}%
+                                  </span>
+                                </div>
+                                <div className="w-full bg-gray-200 rounded-full h-2">
+                                  <div
+                                    className="h-2 rounded-full transition-all duration-500"
+                                    style={{
+                                      width: `${Math.min(
+                                        stats.completion_percentage,
+                                        100
+                                      )}%`,
+                                      backgroundColor:
+                                        stats.completion_percentage >= 100
+                                          ? "#10b981"
+                                          : stats.completion_percentage >= 70
+                                          ? "#3b82f6"
+                                          : stats.completion_percentage >= 40
+                                          ? "#f59e0b"
+                                          : "#ef4444",
+                                    }}
+                                  ></div>
+                                </div>
+                                <div className="grid grid-cols-3 gap-1 text-[10px] text-gray-500 mt-1">
+                                  <div className="text-center">
+                                    উৎপাদন: {stats.total_production}
+                                  </div>
+                                  <div className="text-center">
+                                    বাকি: {stats.remaining_production}
+                                  </div>
+                                  <div className="text-center">
+                                    মোট: {stats.current_total}
+                                  </div>
+                                </div>
                               </div>
-                              <div className="text-center">
-                                বাকি: {stats.remaining_production}
-                              </div>
-                              <div className="text-center">
-                                মোট: {stats.current_total}
-                              </div>
-                            </div>
-                          </div>
+                            </>
+                          )}
                         </div>
                       </div>
                     );
@@ -1026,24 +1063,28 @@ export default function SectionProductionPage() {
                       </div>
 
                       <div className="space-y-2">
-                        <div className="flex justify-between items-center">
-                          <span className="text-sm text-gray-600">
-                            উৎপাদন লক্ষ্য (২০%+)
-                          </span>
-                          <span className="font-semibold text-gray-900">
-                            {sectionTotals.production_target.toLocaleString(
-                              "bn-BD"
-                            )}
-                          </span>
-                        </div>
-                        <div className="flex justify-between items-center">
-                          <span className="text-sm text-gray-600">
-                            মৌলিক উৎপাদন লক্ষ্য
-                          </span>
-                          <span className="font-semibold text-gray-900">
-                            {sectionTotals.floor_target.toLocaleString("bn-BD")}
-                          </span>
-                        </div>
+                        {!compactView && (
+                          <>
+                            <div className="flex justify-between items-center">
+                              <span className="text-sm text-gray-600">
+                                উৎপাদন লক্ষ্য (২০%+)
+                              </span>
+                              <span className="font-semibold text-gray-900">
+                                {sectionTotals.production_target.toLocaleString(
+                                  "bn-BD"
+                                )}
+                              </span>
+                            </div>
+                            <div className="flex justify-between items-center">
+                              <span className="text-sm text-gray-600">
+                                মৌলিক উৎপাদন লক্ষ্য
+                              </span>
+                              <span className="font-semibold text-gray-900">
+                                {sectionTotals.floor_target.toLocaleString("bn-BD")}
+                              </span>
+                            </div>
+                          </>
+                        )}
                         <div className="flex justify-between items-center">
                           <span className="text-sm text-gray-600 ">
                             মোট উৎপাদন
@@ -1052,24 +1093,28 @@ export default function SectionProductionPage() {
                             {sectionTotals.total_carton.toLocaleString("bn-BD")}
                           </span>
                         </div>
-                        <div className="flex justify-between items-center">
-                          <span className="text-sm text-gray-600">
-                            বাকি পরিমাণ
-                          </span>
-                          <span className="font-semibold text-gray-900">
-                            {sectionTotals.remaining_production.toLocaleString(
-                              "bn-BD"
-                            )}
-                          </span>
-                        </div>
-                        <div className="flex justify-between items-center">
-                          <span className="text-sm text-gray-600">
-                            মোট মূল্য
-                          </span>
-                          <span className="font-semibold text-blue-600">
-                            ৳{sectionTotals.total_value.toLocaleString("bn-BD")}
-                          </span>
-                        </div>
+                        {!compactView && (
+                          <>
+                            <div className="flex justify-between items-center">
+                              <span className="text-sm text-gray-600">
+                                বাকি পরিমাণ
+                              </span>
+                              <span className="font-semibold text-gray-900">
+                                {sectionTotals.remaining_production.toLocaleString(
+                                  "bn-BD"
+                                )}
+                              </span>
+                            </div>
+                            <div className="flex justify-between items-center">
+                              <span className="text-sm text-gray-600">
+                                মোট মূল্য
+                              </span>
+                              <span className="font-semibold text-blue-600">
+                                ৳{sectionTotals.total_value.toLocaleString("bn-BD")}
+                              </span>
+                            </div>
+                          </>
+                        )}
                         <div className="flex justify-between items-center">
                           <span className="text-sm text-gray-600">
                             মোট ব্যাচ
@@ -1116,7 +1161,7 @@ export default function SectionProductionPage() {
                             <div className="h-full flex flex-col">
                               <div className="flex-1 flex flex-col items-center justify-center p-2">
                                 <div
-                                  className={`text-lg font-bold ${
+                                  className={`${compactView ? 'text-base' : 'text-lg'} font-bold ${
                                     isTodayDay
                                       ? "text-green-700"
                                       : isWeekendDay
@@ -1126,17 +1171,19 @@ export default function SectionProductionPage() {
                                 >
                                   {day}
                                 </div>
-                                <div
-                                  className={`text-sm mt-1 ${
-                                    isWeekendDay
-                                      ? "text-red-600 font-semibold"
-                                      : "text-gray-600"
-                                  }`}
-                                >
-                                  {getDayName(day)}
-                                  {isTodayDay && " (আজ)"}
-                                  {isWeekendDay && " (ছুটি)"}
-                                </div>
+                                {!compactView && (
+                                  <div
+                                    className={`text-sm mt-1 ${
+                                      isWeekendDay
+                                        ? "text-red-600 font-semibold"
+                                        : "text-gray-600"
+                                    }`}
+                                  >
+                                    {getDayName(day)}
+                                    {isTodayDay && " (আজ)"}
+                                    {isWeekendDay && " (ছুটি)"}
+                                  </div>
+                                )}
                               </div>
 
                               <div className="flex border-t border-gray-200">
@@ -1186,7 +1233,7 @@ export default function SectionProductionPage() {
                           return (
                             <div
                               key={`${product.id}-${day}`}
-                              className={`w-52 shrink-0 border-r border-gray-200 ${
+                              className={`w-52 shrink-0 border-r border-gray-200 p-1 ${
                                 isWeekendDay
                                   ? "bg-red-50 hover:bg-red-100"
                                   : isTodayDay
@@ -1218,7 +1265,7 @@ export default function SectionProductionPage() {
                                           e.target.value
                                         )
                                       }
-                                      className={`text-sm w-full h-full text-center border-none focus:outline-none focus:ring-2 focus:ring-blue-500 bg-transparent px-4 ${
+                                      className={`text-sm w-full h-full text-center border-none focus:outline-none focus:ring-2 focus:ring-blue-500 bg-transparent ${
                                         isWeekendDay
                                           ? "placeholder-red-300"
                                           : isTodayDay
@@ -1251,7 +1298,7 @@ export default function SectionProductionPage() {
                                           e.target.value
                                         )
                                       }
-                                      className={`text-sm w-full h-full text-center border-none focus:outline-none focus:ring-2 focus:ring-blue-500 bg-transparent px-4 ${
+                                      className={`text-sm w-full h-full text-center border-none focus:outline-none focus:ring-2 focus:ring-blue-500 bg-transparent ${
                                         isWeekendDay
                                           ? "placeholder-red-300"
                                           : isTodayDay
@@ -1305,7 +1352,9 @@ export default function SectionProductionPage() {
                                   }`}
                                 >
                                   <div
-                                    className={`h-full flex items-center justify-center font-bold text-lg ${
+                                    className={`h-full flex items-center justify-center font-bold ${
+                                      compactView ? 'text-base' : 'text-lg'
+                                    } ${
                                       isTodayDay
                                         ? "text-green-700"
                                         : isWeekendDay
@@ -1326,7 +1375,9 @@ export default function SectionProductionPage() {
                                   }`}
                                 >
                                   <div
-                                    className={`h-full flex items-center justify-center font-bold text-lg ${
+                                    className={`h-full flex items-center justify-center font-bold ${
+                                      compactView ? 'text-base' : 'text-lg'
+                                    } ${
                                       isTodayDay
                                         ? "text-green-700"
                                         : isWeekendDay
@@ -1355,8 +1406,13 @@ export default function SectionProductionPage() {
           <div className="inline-flex items-center gap-3 text-sm text-gray-600 bg-gray-50 px-4 py-3 rounded-xl border border-gray-200">
             <Info className="h-4 w-4 text-blue-500" />
             <span className="">
-              টিপ: প্রতিটি ইনপুট ব্লার/এন্টারে স্বয়ংক্রিয়ভাবে সংরক্ষণ হবে। &quot;সব
-              পরিবর্তন সংরক্ষণ করুন&quot; বাটন শুধু পেন্ডিং পরিবর্তনের জন্য।
+              টিপ: {compactView ? "শুধু প্রোডাক্ট নাম দেখানো হচ্ছে।" : "সম্পূর্ণ বিবরণ দেখানো হচ্ছে।"} 
+              <button 
+                onClick={() => setCompactView(!compactView)}
+                className="ml-2 text-blue-600 hover:text-blue-800 font-medium underline"
+              >
+                {compactView ? "সম্পূর্ণ ভিউ দেখুন" : "কমপ্যাক্ট ভিউ দেখুন"}
+              </button>
             </span>
           </div>
         </div>
