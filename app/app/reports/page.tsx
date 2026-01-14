@@ -9,7 +9,6 @@ import Calendar from "react-calendar";
 import "react-calendar/dist/Calendar.css";
 import { useReactToPrint } from "react-to-print";
 
-
 type ProductWithId = Product & { id: string };
 type GroupedData = Record<string, any[]>;
 type ManpowerData = Record<string, number> | undefined;
@@ -64,16 +63,49 @@ export default function Reports() {
           width: 100% !important;
           border-collapse: collapse !important;
           font-size: 10px !important;
+          table-layout: fixed !important;
         }
         .print-table th, .print-table td {
           border: 1px solid #000 !important;
           padding: 2px 4px !important;
           text-align: center !important;
           font-size: 10px !important;
+          word-wrap: break-word !important;
         }
         .print-table th {
           background-color: #f0f0f0 !important;
           font-weight: bold !important;
+        }
+        .section-column {
+          width: 6% !important;
+          min-width: 40px !important;
+          max-width: 50px !important;
+        }
+        .product-column {
+          width: 38% !important;
+          min-width: 120px !important;
+          text-align: left !important;
+        }
+        .batch-column {
+          width: 10% !important;
+          min-width: 50px !important;
+        }
+        .carton-column {
+          width: 10% !important;
+          min-width: 50px !important;
+        }
+        .total-batch-column {
+          width: 10% !important;
+          min-width: 50px !important;
+        }
+        .total-carton-column {
+          width: 10% !important;
+          min-width: 50px !important;
+        }
+        .mp-column {
+          width: 8% !important;
+          min-width: 40px !important;
+          max-width: 45px !important;
         }
         .product-info {
           font-size: 9px !important;
@@ -159,11 +191,11 @@ export default function Reports() {
   }, [products, manpower, selectedDate]);
 
   const handleCalendarChange = (value: unknown) => {
-  if (!(value instanceof Date)) return;
+    if (!(value instanceof Date)) return;
 
-  setSelectedDate(value);
-  findFilter(value.getDate());
-};
+    setSelectedDate(value);
+    findFilter(value.getDate());
+  };
 
   const sections = Object.keys(data).filter(
     (section) => data[section].length > 0
@@ -229,9 +261,6 @@ export default function Reports() {
             <p className="text-sm">
               Period: {monthName} {year} | Date: {formattedDate}
             </p>
-            {/* <p className="text-xs text-gray-600">
-              Generated on: {new Date().toLocaleDateString()}
-            </p> */}
           </div>
           <hr className="my-2 border-t border-gray-600" />
         </div>
@@ -240,25 +269,25 @@ export default function Reports() {
           <table className="min-w-full border border-gray-300 print-table text-sm">
             <thead>
               <tr className="bg-gray-100">
-                <th className="border border-gray-300 p-1 w-20 font-semibold print:py-0 print:px-1">
+                <th className="border border-gray-300 p-1 font-semibold print:py-0 print:px-1 section-column">
                   Section
                 </th>
-                <th className="border border-gray-300 p-1 font-semibold print:py-0 print:px-1">
+                <th className="border border-gray-300 p-1 font-semibold print:py-0 print:px-1 product-column">
                   Product
                 </th>
-                <th className="border border-gray-300 p-1 font-semibold print:py-0 print:px-1">
+                <th className="border border-gray-300 p-1 font-semibold print:py-0 print:px-1 batch-column">
                   Daily Batch
                 </th>
-                <th className="border border-gray-300 p-1 font-semibold print:py-0 print:px-1">
+                <th className="border border-gray-300 p-1 font-semibold print:py-0 print:px-1 carton-column">
                   Daily Carton
                 </th>
-                <th className="border border-gray-300 p-1 font-semibold print:py-0 print:px-1">
+                <th className="border border-gray-300 p-1 font-semibold print:py-0 print:px-1 total-batch-column">
                   Total Batch
                 </th>
-                <th className="border border-gray-300 p-1 font-semibold print:py-0 print:px-1">
+                <th className="border border-gray-300 p-1 font-semibold print:py-0 print:px-1 total-carton-column">
                   Total Carton
                 </th>
-                <th className="border border-gray-300 p-1 w-16 font-semibold print:py-0 print:px-1">
+                <th className="border border-gray-300 p-1 font-semibold print:py-0 print:px-1 mp-column">
                   M.P
                 </th>
               </tr>
@@ -278,56 +307,57 @@ export default function Reports() {
                       >
                         {index === 0 ? (
                           <td
-                            className="border border-gray-300 p-1 text-center align-middle print:py-0 print:px-1"
+                            className="border w-8 border-gray-300 text-center align-middle print:py-0 print:px-1 section-column"
                             rowSpan={data[section].length}
                           >
-                            <div className="-rotate-90 inline-block print:text-xs">
-                              <p className="font-semibold">
+                            <div className="section-content -rotate-90">
+                              <p className="font-semibold text-xs print:text-[10px] leading-tight">
                                 {section.toUpperCase()}
                               </p>
                               <p>
-                                ({sections.reduce(
-                                  (sum, section) =>
-                                    sum +
-                                    data[section].reduce(
-                                      (s, p) => s + p.carton * p.price,
-                                      0
-                                    ),
-                                  0
-                                )})
+                                (
+                                {sections
+                                  .reduce(
+                                    (sum, section) =>
+                                      sum +
+                                      data[section].reduce(
+                                        (s, p) => s + p.carton * p.price,
+                                        0
+                                      ),
+                                    0
+                                  )
+                                  .toFixed(0)}
+                                )
                               </p>
                             </div>
                           </td>
                         ) : null}
-                        <td className="border border-gray-300 p-1 print:py-0 print:px-1">
+                        <td className="border border-gray-300 p-1 print:py-0 print:px-1 product-column">
                           <div className="product-info">
                             <div className="product-name text-sm print:text-xs text-left">
                               {product.name}
                             </div>
-                            {/* <div className="product-sku text-xs print:text-[10px] text-gray-600">
-                              SKU: {product.sku}
-                            </div> */}
                           </div>
                         </td>
-                        <td className="border border-gray-300 p-1 text-center print:py-0 print:px-1">
+                        <td className="border border-gray-300 p-1 text-center print:py-0 print:px-1 batch-column">
                           <span className="font-medium">{product.batch}</span>
                         </td>
-                        <td className="border border-gray-300 p-1 text-center print:py-0 print:px-1">
+                        <td className="border border-gray-300 p-1 text-center print:py-0 print:px-1 carton-column">
                           <span className="font-medium">{product.carton}</span>
                         </td>
-                        <td className="border border-gray-300 p-1 text-center print:py-0 print:px-1">
+                        <td className="border border-gray-300 p-1 text-center print:py-0 print:px-1 total-batch-column">
                           <span className="font-medium">
                             {product.totalBatch}
                           </span>
                         </td>
-                        <td className="border border-gray-300 p-1 text-center print:py-0 print:px-1">
+                        <td className="border border-gray-300 p-1 text-center print:py-0 print:px-1 total-carton-column">
                           <span className="font-medium">
                             {product.totalCarton}
                           </span>
                         </td>
                         {index === 0 ? (
                           <td
-                            className="border border-gray-300 p-1 text-center font-semibold align-middle print:py-0 print:px-1"
+                            className="border border-gray-300 p-1 text-center font-semibold align-middle print:py-0 print:px-1 mp-column"
                             rowSpan={data[section].length}
                           >
                             <span className="print:text-xs">
@@ -359,7 +389,7 @@ export default function Reports() {
                   >
                     <span className="print:text-xs">Total:</span>
                   </td>
-                  <td className="border border-gray-300 p-1 text-center print:py-0 print:px-1">
+                  <td className="border border-gray-300 p-1 text-center print:py-0 print:px-1 batch-column">
                     <span className="print:text-xs">
                       {sections.reduce(
                         (sum, section) =>
@@ -368,7 +398,7 @@ export default function Reports() {
                       )}
                     </span>
                   </td>
-                  <td className="border border-gray-300 p-1 text-center print:py-0 print:px-1">
+                  <td className="border border-gray-300 p-1 text-center print:py-0 print:px-1 carton-column">
                     <span className="print:text-xs">
                       {sections.reduce(
                         (sum, section) =>
@@ -377,7 +407,7 @@ export default function Reports() {
                       )}
                     </span>
                   </td>
-                  <td className="border border-gray-300 p-1 text-center print:py-0 print:px-1">
+                  <td className="border border-gray-300 p-1 text-center print:py-0 print:px-1 total-batch-column">
                     <span className="print:text-xs">
                       {sections.reduce(
                         (sum, section) =>
@@ -387,7 +417,7 @@ export default function Reports() {
                       )}
                     </span>
                   </td>
-                  <td className="border border-gray-300 p-1 text-center print:py-0 print:px-1">
+                  <td className="border border-gray-300 p-1 text-center print:py-0 print:px-1 total-carton-column">
                     <span className="print:text-xs">
                       {sections.reduce(
                         (sum, section) =>
@@ -397,7 +427,7 @@ export default function Reports() {
                       )}
                     </span>
                   </td>
-                  <td className="border border-gray-300 p-1 text-center print:py-0 print:px-1">
+                  <td className="border border-gray-300 p-1 text-center print:py-0 print:px-1 mp-column">
                     <span className="print:text-xs">
                       {sections.reduce(
                         (sum, section) => sum + (mp?.[section] || 0),
@@ -429,6 +459,15 @@ export default function Reports() {
           padding: 1rem;
         }
 
+        .section-content {
+          display: flex;
+          flex-direction: column;
+          justify-content: center;
+          align-items: center;
+          height: 100%;
+          padding: 2px 0;
+        }
+
         /* প্রিন্ট স্টাইল */
         @media print {
           .no-print {
@@ -445,25 +484,31 @@ export default function Reports() {
           h2,
           h3 {
             page-break-after: avoid;
-            font-size: 14px !important;
+            font-size: 16px !important;
           }
           table {
             page-break-inside: avoid;
             font-size: 10px !important;
+            table-layout: fixed !important;
           }
           tr {
             page-break-inside: avoid;
             page-break-after: auto;
           }
           .product-info {
-            min-width: 150px;
+            min-width: 120px;
           }
           .product-name {
             font-size: 10px !important;
             font-weight: 600 !important;
           }
-          .product-sku {
-            font-size: 9px !important;
+          .section-column {
+            width: 6% !important;
+            max-width: 50px !important;
+          }
+          .mp-column {
+            width: 7% !important;
+            max-width: 45px !important;
           }
         }
       `}</style>

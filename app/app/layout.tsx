@@ -346,7 +346,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       {/* Main Content */}
       <div className="flex-1 overflow-hidden flex flex-col">
         {/* Top Bar */}
-        <div className="bg-white border-b pl-16 lg:pl-0 px-4 lg:px-6 py-4">
+        <div className="bg-white border-b pl-16 md:pl-4 lg:pl-4 px-4 lg:px-6 py-4">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
               <h2 className="text-lg sm:text-xl font-semibold text-gray-800">
