@@ -1,0 +1,456 @@
+"use client";
+import { ManPower } from "@/types/Manpower.Types";
+import { Product } from "@/types/Product.Types";
+import Firebase from "@/utils/firebase";
+import { getPeriod } from "@/utils/storage";
+import { Printer } from "lucide-react";
+import React, { useEffect, useRef, useState } from "react";
+import Calendar from "react-calendar";
+import "react-calendar/dist/Calendar.css";
+import { useReactToPrint } from "react-to-print";
+
+type ProductWithId = Product & { id: string };
+type GroupedData = Record<string, any[]>;
+type ManpowerData = Record<string, number> | undefined;
+
+export default function Reports() {
+  const { year, month } = getPeriod();
+  const monthName = [
+    "January",
+    "February",
+    "March",
+    "April",
+    "May",
+    "June",
+    "July",
+    "August",
+    "September",
+    "October",
+    "November",
+    "December",
+  ][month - 1];
+
+  const [selectedDate, setSelectedDate] = useState<Date>(
+    new Date(year, month - 1, 1)
+  );
+  const [products, setProducts] = useState<ProductWithId[]>([]);
+  const [manpower, setManpower] = useState<ManPower | null>(null);
+  const [data, setData] = useState<GroupedData>({});
+  const [mp, setMp] = useState<ManpowerData>();
+
+  // প্রিন্টের জন্য রেফ
+  const contentRef = useRef<HTMLDivElement>(null);
+
+  // প্রিন্ট ফাংশন
+  const handlePrint = useReactToPrint({
+    contentRef,
+    documentTitle: `Production_Report_${monthName}_${year}_${selectedDate.getDate()}`,
+    pageStyle: `
+      @media print {
+        @page {
+          size: A4;
+          margin: 0.2in;
+        }
+        body {
+          -webkit-print-color-adjust: exact !important;
+          print-color-adjust: exact !important;
+          font-size: 10px !important;
+        }
+        .no-print {
+          display: none !important;
+        }
+        .print-table {
+          width: 100% !important;
+          border-collapse: collapse !important;
+          font-size: 10px !important;
+        }
+        .print-table th, .print-table td {
+          border: 1px solid #000 !important;
+          padding: 2px 4px !important;
+          text-align: center !important;
+          font-size: 10px !important;
+        }
+        .print-table th {
+          background-color: #f0f0f0 !important;
+          font-weight: bold !important;
+        }
+        .product-info {
+          font-size: 9px !important;
+          line-height: 1.2 !important;
+        }
+        .product-name {
+          font-weight: bold !important;
+          margin-bottom: 1px !important;
+        }
+        .product-sku {
+          color: #666 !important;
+          font-size: 8px !important;
+        }
+      }
+    `,
+  });
+
+  const findFilter = (date: number) => {
+    const filterData = products
+      .map((product) => {
+        const { name, sku, section, data: productData } = product;
+
+        const findDayProduction = productData.find((d) => d.date === date);
+        const totalProduction = productData.filter((d) => d.date <= date);
+
+        const totalBatch = totalProduction.reduce(
+          (acc, curr) => acc + curr.batch,
+          0
+        );
+        const totalCarton = totalProduction.reduce(
+          (acc, curr) => acc + curr.carton,
+          0
+        );
+
+        return {
+          name,
+          sku,
+          section,
+          batch: findDayProduction?.batch ?? 0,
+          carton: findDayProduction?.carton ?? 0,
+          totalBatch,
+          totalCarton,
+        };
+      })
+      // ফিল্টার: যেসব প্রোডাক্টে batch এবং carton উভয়ই ০ (শূন্য) সেগুলো বাদ
+      .filter(
+        (product) =>
+          product.batch > 0 ||
+          product.carton > 0 ||
+          product.totalBatch > 0 ||
+          product.totalCarton > 0
+      );
+
+    // ✅ GROUP BY SECTION - শুধুমাত্র যেসব সেকশনে ফিল্টার করা প্রোডাক্ট আছে
+    const groupedBySection = filterData.reduce<GroupedData>((acc, product) => {
+      if (!acc[product.section]) {
+        acc[product.section] = [];
+      }
+      acc[product.section].push(product);
+      return acc;
+    }, {});
+
+    setData(groupedBySection);
+    const findMP = manpower?.data.find((m) => m.date === date);
+    setMp(findMP);
+  };
+
+  useEffect(() => {
+    const run = async () => {
+      const p = await Firebase.getProductsByPeriod<Product>(year, monthName);
+      setProducts(p);
+      const mp = await Firebase.getManpowerByPeriod<ManPower>(year, monthName);
+      setManpower(mp);
+    };
+    run();
+  }, [year, monthName]);
+
+  useEffect(() => {
+    if (products.length > 0 && manpower) {
+      findFilter(selectedDate.getDate());
+    }
+  }, [products, manpower, selectedDate]);
+
+  const handleCalendarChange = (date: Date | Date[] | null) => {
+    if (!(date instanceof Date)) return;
+    const selectedYear = date.getFullYear();
+    const selectedMonth = date.getMonth() + 1;
+    const day = date.getDate();
+    const newDate = new Date(selectedYear, selectedMonth - 1, day);
+    setSelectedDate(newDate);
+    findFilter(day);
+  };
+
+  const sections = Object.keys(data).filter(
+    (section) => data[section].length > 0
+  );
+
+  // ফরম্যাটেড তারিখ
+  const formattedDate = selectedDate.toLocaleDateString("en-GB", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  });
+
+  return (
+    <div className="bg-gradient-to-br from-blue-50 to-gray-50 p-4 mb-16">
+      {/* প্রিন্ট বাটন */}
+      <div className="fixed bottom-4 right-4 z-50 no-print">
+        <button
+          onClick={handlePrint}
+          className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-full shadow-lg transition-colors duration-200"
+        >
+          <Printer className="text-lg" />
+        </button>
+      </div>
+
+      {/* প্রিন্টেবল কন্টেন্ট */}
+      <div ref={contentRef} className="print-container">
+        <div className="mb-8 no-print">
+          <h1 className="text-2xl font-bold mb-4 text-center">
+            Production Report - {monthName} {year}
+          </h1>
+          <Calendar
+            value={selectedDate}
+            onChange={handleCalendarChange}
+            minDate={new Date(year, month - 1, 1)}
+            maxDate={
+              new Date(year, month - 1, new Date(year, month, 0).getDate())
+            }
+            next2Label={null}
+            prev2Label={null}
+            nextLabel={null}
+            prevLabel={null}
+            view="month"
+            tileClassName={({ date }) => {
+              if (
+                date.getFullYear() !== year ||
+                date.getMonth() + 1 !== month
+              ) {
+                return "disabled-tile";
+              }
+              return "";
+            }}
+          />
+        </div>
+
+        {/* প্রিন্ট হেডার (শুধু প্রিন্টের সময় দেখা যাবে) */}
+        <div className="hidden print:block mb-4">
+          <div className="text-center">
+            <h1 className="text-xl font-bold">Production Daily Report</h1>
+            <p className="text-sm">
+              Month: {monthName} {year} | Date: {formattedDate}
+            </p>
+            <p className="text-xs text-gray-600">
+              Generated on: {new Date().toLocaleDateString()}
+            </p>
+          </div>
+          <hr className="my-2 border-t border-gray-300" />
+        </div>
+
+        <div className="overflow-x-auto">
+          <table className="min-w-full border border-gray-300 print-table text-sm">
+            <thead>
+              <tr className="bg-gray-100">
+                <th className="border border-gray-300 p-1 w-20 font-semibold print:py-0 print:px-1">
+                  Section
+                </th>
+                <th className="border border-gray-300 p-1 font-semibold print:py-0 print:px-1">
+                  Product
+                </th>
+                <th className="border border-gray-300 p-1 font-semibold print:py-0 print:px-1">
+                  Daily Batch
+                </th>
+                <th className="border border-gray-300 p-1 font-semibold print:py-0 print:px-1">
+                  Daily Carton
+                </th>
+                <th className="border border-gray-300 p-1 font-semibold print:py-0 print:px-1">
+                  Total Batch
+                </th>
+                <th className="border border-gray-300 p-1 font-semibold print:py-0 print:px-1">
+                  Total Carton
+                </th>
+                <th className="border border-gray-300 p-1 w-16 font-semibold print:py-0 print:px-1">
+                  M.P
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {sections.length > 0 ? (
+                sections.map((section) => (
+                  <React.Fragment key={section}>
+                    {data[section].map((product, index) => (
+                      <tr
+                        key={`${section}-${product.sku}-${index}`}
+                        className={
+                          index % 2 === 0
+                            ? "bg-white"
+                            : "bg-gray-50 print:bg-gray-100"
+                        }
+                      >
+                        {index === 0 ? (
+                          <td
+                            className="border border-gray-300 p-1 font-semibold text-center align-middle print:py-0 print:px-1"
+                            rowSpan={data[section].length}
+                          >
+                            <span className="print:text-xs">
+                              {section.toUpperCase()}
+                            </span>
+                          </td>
+                        ) : null}
+                        <td className="border border-gray-300 p-1 print:py-0 print:px-1">
+                          <div className="product-info">
+                            <div className="product-name text-sm print:text-xs text-left">
+                              {product.name}
+                            </div>
+                            {/* <div className="product-sku text-xs print:text-[10px] text-gray-600">
+                              SKU: {product.sku}
+                            </div> */}
+                          </div>
+                        </td>
+                        <td className="border border-gray-300 p-1 text-center print:py-0 print:px-1">
+                          <span className="font-medium">{product.batch}</span>
+                        </td>
+                        <td className="border border-gray-300 p-1 text-center print:py-0 print:px-1">
+                          <span className="font-medium">{product.carton}</span>
+                        </td>
+                        <td className="border border-gray-300 p-1 text-center print:py-0 print:px-1">
+                          <span className="font-medium">
+                            {product.totalBatch}
+                          </span>
+                        </td>
+                        <td className="border border-gray-300 p-1 text-center print:py-0 print:px-1">
+                          <span className="font-medium">
+                            {product.totalCarton}
+                          </span>
+                        </td>
+                        {index === 0 ? (
+                          <td
+                            className="border border-gray-300 p-1 text-center font-semibold align-middle print:py-0 print:px-1"
+                            rowSpan={data[section].length}
+                          >
+                            <span className="print:text-xs">
+                              {mp?.[section] || 0}
+                            </span>
+                          </td>
+                        ) : null}
+                      </tr>
+                    ))}
+                  </React.Fragment>
+                ))
+              ) : (
+                <tr>
+                  <td
+                    colSpan={7}
+                    className="border border-gray-300 p-4 text-center text-gray-500"
+                  >
+                    No production data available for selected date
+                  </td>
+                </tr>
+              )}
+            </tbody>
+            {sections.length > 0 && (
+              <tfoot>
+                <tr className="bg-gray-200 font-bold">
+                  <td
+                    colSpan={2}
+                    className="border border-gray-300 p-1 text-right print:py-0 print:px-1"
+                  >
+                    <span className="print:text-xs">Total:</span>
+                  </td>
+                  <td className="border border-gray-300 p-1 text-center print:py-0 print:px-1">
+                    <span className="print:text-xs">
+                      {sections.reduce(
+                        (sum, section) =>
+                          sum + data[section].reduce((s, p) => s + p.batch, 0),
+                        0
+                      )}
+                    </span>
+                  </td>
+                  <td className="border border-gray-300 p-1 text-center print:py-0 print:px-1">
+                    <span className="print:text-xs">
+                      {sections.reduce(
+                        (sum, section) =>
+                          sum + data[section].reduce((s, p) => s + p.carton, 0),
+                        0
+                      )}
+                    </span>
+                  </td>
+                  <td className="border border-gray-300 p-1 text-center print:py-0 print:px-1">
+                    <span className="print:text-xs">
+                      {sections.reduce(
+                        (sum, section) =>
+                          sum +
+                          data[section].reduce((s, p) => s + p.totalBatch, 0),
+                        0
+                      )}
+                    </span>
+                  </td>
+                  <td className="border border-gray-300 p-1 text-center print:py-0 print:px-1">
+                    <span className="print:text-xs">
+                      {sections.reduce(
+                        (sum, section) =>
+                          sum +
+                          data[section].reduce((s, p) => s + p.totalCarton, 0),
+                        0
+                      )}
+                    </span>
+                  </td>
+                  <td className="border border-gray-300 p-1 text-center print:py-0 print:px-1">
+                    <span className="print:text-xs">
+                      {sections.reduce(
+                        (sum, section) => sum + (mp?.[section] || 0),
+                        0
+                      )}
+                    </span>
+                  </td>
+                </tr>
+              </tfoot>
+            )}
+          </table>
+        </div>
+      </div>
+
+      <style jsx global>{`
+        .disabled-tile {
+          pointer-events: none;
+          opacity: 0.4;
+        }
+        .react-calendar__navigation button:disabled {
+          background-color: transparent;
+        }
+        .react-calendar {
+          width: 100%;
+          max-width: 400px;
+          margin: 0 auto;
+          border: 1px solid #e5e7eb;
+          border-radius: 0.5rem;
+          padding: 1rem;
+        }
+
+        /* প্রিন্ট স্টাইল */
+        @media print {
+          .no-print {
+            display: none !important;
+          }
+          .print-container {
+            padding: 0 !important;
+            margin: 0 !important;
+          }
+          body {
+            font-size: 10px !important;
+          }
+          h1,
+          h2,
+          h3 {
+            page-break-after: avoid;
+            font-size: 14px !important;
+          }
+          table {
+            page-break-inside: avoid;
+            font-size: 10px !important;
+          }
+          tr {
+            page-break-inside: avoid;
+            page-break-after: auto;
+          }
+          .product-info {
+            min-width: 150px;
+          }
+          .product-name {
+            font-size: 10px !important;
+            font-weight: 600 !important;
+          }
+          .product-sku {
+            font-size: 9px !important;
+          }
+        }
+      `}</style>
+    </div>
+  );
+}

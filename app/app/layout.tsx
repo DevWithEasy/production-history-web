@@ -1,9 +1,28 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import Firebase from "../../utils/firebase";
 import { useEffect, useState } from "react";
+import { 
+  Home, 
+  Package, 
+  Users, 
+  FileText, 
+  PlusCircle, 
+  Calendar, 
+  DollarSign,
+  ChevronRight,
+  ChevronDown,
+  BarChart3,
+  Settings,
+  LogOut,
+  Factory,
+  Briefcase,
+  UserPlus,
+  FilePlus,
+  CalendarPlus
+} from "lucide-react";
 
 interface Section {
   id: string;
@@ -16,7 +35,17 @@ export default function AppLayout({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
+  const router = useRouter();
   const [sections, setSections] = useState<Section[]>([]);
+  const [expandedMenus, setExpandedMenus] = useState<{
+    production: boolean;
+    manpower: boolean;
+    products: boolean;
+  }>({
+    production: false,
+    manpower: false,
+    products: false
+  });
 
   useEffect(() => {
     Firebase.getDocuments<Section>("sections").then(setSections);
@@ -24,40 +53,275 @@ export default function AppLayout({
 
   const isProduction = pathname.startsWith("/app/production");
   const isManpower = pathname.startsWith("/app/manpower");
+  const isProducts = pathname.startsWith("/app/products");
+  const isReports = pathname.startsWith("/app/reports");
+  const isIncrements = pathname.startsWith("/app/increaments");
+
+  // Auto expand menus based on current path
+  useEffect(() => {
+    setExpandedMenus({
+      production: isProduction,
+      manpower: isManpower,
+      products: isProducts
+    });
+  }, [pathname]);
+
+  const toggleMenu = (menu: keyof typeof expandedMenus) => {
+    setExpandedMenus(prev => ({
+      ...prev,
+      [menu]: !prev[menu]
+    }));
+  };
+
+  const isActive = (path: string) => {
+    if (path === "/app" && pathname === "/app") return true;
+    return pathname.startsWith(path);
+  };
+
+  const navItems = [
+    {
+      name: "হোম",
+      icon: Home,
+      href: "/app",
+      exact: true
+    },
+    {
+      name: "প্রোডাকশন",
+      icon: Factory,
+      href: "/app/production", // এখানে লিঙ্ক যোগ করেছি
+      hasSubmenu: true,
+      subItems: [
+        {
+          name: "প্রোডাকশন ড্যাশবোর্ড",
+          href: "/app/production",
+          icon: Factory
+        },
+        ...sections.map(section => ({
+          name: section.name,
+          href: `/app/production/${section.id}`,
+          icon: ChevronRight
+        }))
+      ]
+    },
+    {
+      name: "ম্যানপাওয়ার",
+      icon: Users,
+      href: "/app/manpower", // এখানে লিঙ্ক যোগ করেছি
+      hasSubmenu: true,
+      subItems: [
+        {
+          name: "ম্যানপাওয়ার ড্যাশবোর্ড",
+          href: "/app/manpower",
+          icon: Users
+        },
+        {
+          name: "ম্যানপাওয়ার এন্ট্রি",
+          href: "/app/manpower/update",
+          icon: UserPlus
+        }
+      ]
+    },
+    {
+      name: "প্রোডাক্ট ম্যানেজমেন্ট",
+      icon: Package,
+      href: "/app/products", // এখানে লিঙ্ক যোগ করেছি
+      hasSubmenu: true,
+      subItems: [
+        {
+          name: "সমস্ত প্রোডাক্ট",
+          href: "/app/products",
+          icon: Package
+        },
+        {
+          name: "প্রোডাক্ট যোগ করুন",
+          href: "/app/products/add",
+          icon: PlusCircle
+        },
+        {
+          name: "নতুন পিরিয়ড যোগ করুন",
+          href: "/app/products/add-period",
+          icon: CalendarPlus
+        }
+      ]
+    },
+    {
+      name: "রিপোর্টস",
+      icon: BarChart3,
+      href: "/app/reports"
+    },
+    {
+      name: "বেতন বৃদ্ধি",
+      icon: DollarSign,
+      href: "/app/increaments"
+    }
+  ];
 
   return (
-    <div className="flex h-screen overflow-hidden">
-      {/* 👉 LEFT SIDEBAR */}
-      <div className="w-2/12 space-y-2 overflow-y-auto border-r p-3">
-        <Link href="/app" className="block">Home</Link>
-        <Link href="/app/production" className="block">Production</Link>
+    <div className="flex h-screen bg-gray-50 font-[family-name:var(--font-tiro-bangla)]">
+      {/* Sidebar */}
+      <div className="w-64 bg-gradient-to-b from-blue-700 to-blue-500 text-white flex flex-col">
+        {/* Logo */}
+        <div className="p-6 border-b border-blue-600">
+          <div className="flex items-center gap-3">
+            <div className="bg-white p-2 rounded-lg">
+              <Factory className="h-6 w-6 text-blue-600" />
+            </div>
+            <div>
+              <h1 className="text-xl font-bold">এস এন্ড বি নাইস</h1>
+              <p className="text-xs text-blue-200">প্রোডাকশন সিস্টেম</p>
+            </div>
+          </div>
+        </div>
 
-        {isProduction &&
-          sections.map((section) => (
-            <Link
-              key={section.id}
-              href={`/app/production/${section.id}`}
-              className="block ml-4"
+        {/* Navigation */}
+        <nav className="flex-1 overflow-y-auto py-4">
+          <div className="px-4 space-y-1">
+            {navItems.map((item) => {
+              const Icon = item.icon;
+              const isItemActive = isActive(item.href);
+              
+              return (
+                <div key={item.name}>
+                  {item.hasSubmenu ? (
+                    <>
+                      <div className="flex">
+                        {/* Main Menu Item as Link */}
+                        <Link
+                          href={item.href}
+                          className={`flex-1 flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 ${
+                            isItemActive
+                              ? 'bg-blue-700 text-white'
+                              : 'hover:bg-blue-700/50 text-blue-100'
+                          }`}
+                        >
+                          <Icon className="h-5 w-5" />
+                          <span className="font-medium">{item.name}</span>
+                        </Link>
+                        
+                        {/* Expand/Collapse Button */}
+                        <button
+                          onClick={() => toggleMenu(item.name.toLowerCase() as any)}
+                          className={`px-2 rounded-r-lg transition-all duration-200 ${
+                            isItemActive
+                              ? 'bg-blue-700 text-white'
+                              : 'hover:bg-blue-700/50 text-blue-100'
+                          }`}
+                        >
+                          {expandedMenus[item.name.toLowerCase() as keyof typeof expandedMenus] ? (
+                            <ChevronDown className="h-4 w-4" />
+                          ) : (
+                            <ChevronRight className="h-4 w-4" />
+                          )}
+                        </button>
+                      </div>
+                      
+                      {expandedMenus[item.name.toLowerCase() as keyof typeof expandedMenus] && (
+                        <div className="ml-8 mt-1 space-y-1">
+                          {item.subItems?.map((subItem) => {
+                            const SubIcon = subItem.icon;
+                            const isSubActive = isActive(subItem.href);
+                            
+                            return (
+                              <Link
+                                key={subItem.name}
+                                href={subItem.href}
+                                className={`flex items-center gap-3 px-4 py-2 rounded-lg transition-all duration-200 ${
+                                  isSubActive
+                                    ? 'bg-blue-600 text-white'
+                                    : 'hover:bg-blue-700/30 text-blue-200'
+                                }`}
+                              >
+                                <SubIcon className="h-4 w-4" />
+                                <span className="text-sm">{subItem.name}</span>
+                              </Link>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </>
+                  ) : (
+                    <Link
+                      href={item.href}
+                      className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 ${
+                        isItemActive
+                          ? 'bg-blue-700 text-white'
+                          : 'hover:bg-blue-700/50 text-blue-100'
+                      }`}
+                    >
+                      <Icon className="h-5 w-5" />
+                      <span className="font-medium">{item.name}</span>
+                    </Link>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </nav>
+
+        {/* User Profile Section */}
+        <div className="p-4 border-t border-blue-600">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center">
+              <Briefcase className="h-5 w-5" />
+            </div>
+            <div className="flex-1">
+              <p className="text-sm font-medium">প্রশাসক</p>
+              <p className="text-xs text-blue-200">Admin Panel</p>
+            </div>
+            <button 
+              onClick={() => {
+                localStorage.removeItem("pin_key");
+                router.push("/");
+              }}
+              className="p-2 hover:bg-blue-600 rounded-lg transition-colors"
+              title="লগআউট"
             >
-              {section.name}
-            </Link>
-          ))}
-
-        <Link href="/app/manpower" className="block">ManPower</Link>
-
-        {isManpower && (
-          <Link href="/app/manpower/update" className="block ml-4">
-            Update
-          </Link>
-        )}
-        <Link href="/app/products" className="block">Products</Link>
-        <Link href="/app/products/add" className="block">Add Product</Link>
-        <Link href="/app/products/add-period" className="block">Add Period</Link>
+              <LogOut className="h-4 w-4" />
+            </button>
+          </div>
+        </div>
       </div>
 
-      {/* 👉 RIGHT CONTENT */}
-      <div className="w-10/12 overflow-y-auto p-4">
-        {children}
+      {/* Main Content */}
+      <div className="flex-1 overflow-hidden flex flex-col">
+        {/* Top Bar */}
+        <div className="bg-white border-b px-6 py-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-xl font-semibold text-gray-800">
+                {pathname === "/app" && "ড্যাশবোর্ড"}
+                {pathname === "/app/production" && "প্রোডাকশন ড্যাশবোর্ড"}
+                {isProduction && pathname !== "/app/production" && "প্রোডাকশন ম্যানেজমেন্ট"}
+                {isManpower && "ম্যানপাওয়ার ম্যানেজমেন্ট"}
+                {isProducts && "প্রোডাক্ট ম্যানেজমেন্ট"}
+                {isReports && "রিপোর্টস"}
+                {isIncrements && "বেতন বৃদ্ধি ব্যবস্থাপনা"}
+              </h2>
+              <p className="text-sm text-gray-600">
+                {pathname === "/app" && "প্রধান প্যানেল"}
+                {pathname === "/app/production" && "সকল সেকশনের প্রোডাকশন সারসংক্ষেপ"}
+                {isProduction && pathname !== "/app/production" && "দৈনিক প্রোডাকশন ডাটা এন্ট্রি ও ব্যবস্থাপনা"}
+                {isManpower && "শ্রমিক সংখ্যা ও তথ্য ব্যবস্থাপনা"}
+                {isProducts && "প্রোডাক্ট তালিকা ও ক্যাটাগরি ব্যবস্থাপনা"}
+                {isReports && "প্রোডাকশন রিপোর্ট ও বিশ্লেষণ"}
+                {isIncrements && "কর্মীদের বেতন বৃদ্ধির আবেদন ব্যবস্থাপনা"}
+              </p>
+            </div>
+            <div className="flex items-center gap-4">
+              <div className="bg-blue-50 px-4 py-2 rounded-lg">
+                <p className="text-sm text-gray-600">বর্তমান পিরিয়ড</p>
+                <p className="font-semibold text-blue-700">ডিসেম্বর ২০২৬</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Page Content */}
+        <div className="flex-1 overflow-y-auto">
+          <div className="max-w-7xl mx-auto">
+            {children}
+          </div>
+        </div>
       </div>
     </div>
   );

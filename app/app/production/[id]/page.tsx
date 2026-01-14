@@ -966,7 +966,7 @@ export default function SectionProductionPage() {
                     return (
                       <div
                         key={day}
-                        className={`w-36 shrink-0 border-r ${
+                        className={`w-44 shrink-0 border-r ${
                           isWeekendDay
                             ? "bg-red-50"
                             : isTodayDay
@@ -1050,7 +1050,7 @@ export default function SectionProductionPage() {
                       return (
                         <div
                           key={`${product.id}-${day}`}
-                          className={`w-36 shrink-0 border-r ${
+                          className={`w-44 shrink-0 border-r ${
                             isWeekendDay
                               ? "bg-red-50"
                               : isTodayDay
@@ -1081,7 +1081,7 @@ export default function SectionProductionPage() {
                                       e.target.value
                                     )
                                   }
-                                  className={`w-full h-full text-center border-none focus:outline-none focus:ring-1 focus:ring-blue-500 bg-transparent px-2 ${
+                                  className={`text-sm w-full h-full text-center border-none focus:outline-none focus:ring-1 focus:ring-blue-500 bg-transparent px-2 ${
                                     isWeekendDay
                                       ? "placeholder-red-300"
                                       : isTodayDay
@@ -1112,7 +1112,7 @@ export default function SectionProductionPage() {
                                       e.target.value
                                     )
                                   }
-                                  className={`w-full h-full text-center border-none focus:outline-none focus:ring-1 focus:ring-blue-500 bg-transparent px-4 ${
+                                  className={`text-sm w-full h-full text-center border-none focus:outline-none focus:ring-1 focus:ring-blue-500 bg-transparent px-4 ${
                                     isWeekendDay
                                       ? "placeholder-red-300"
                                       : isTodayDay
@@ -1145,7 +1145,7 @@ export default function SectionProductionPage() {
                     return (
                       <div
                         key={`total-${day}`}
-                        className={`w-36 shrink-0 border-r ${
+                        className={`w-44 shrink-0 border-r ${
                           isWeekendDay
                             ? "bg-red-100"
                             : isTodayDay

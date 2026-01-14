@@ -113,22 +113,87 @@ class Firebase {
     }));
   }
   static async getManpowerByPeriod<T>(
-  year: number,
-  monthName: string
-): Promise<T | null> {
-  const ref = doc(
-    db,
-    "manpowers",
-    year.toString(),
-    "months",
-    monthName
-  );
+    year: number,
+    monthName: string
+  ): Promise<T | null> {
+    const ref = doc(db, "manpowers", year.toString(), "months", monthName);
 
-  const snap = await getDoc(ref);
+    const snap = await getDoc(ref);
 
-  if (!snap.exists()) return null;
-  return snap.data() as T;
-}
+    if (!snap.exists()) return null;
+    return snap.data() as T;
+  }
+  static async updateManpowerData(
+    year: number,
+    monthName: string,
+    data: any
+  ): Promise<void> {
+    try {
+      const docRef = doc(db, "manpowers", year.toString(), "months", monthName);
+      const docSnap = await getDoc(docRef);
+
+      if (docSnap.exists()) {
+        const existingData = docSnap.data();
+        const dataArray = existingData.data || [];
+
+        // Find if date already exists
+        const dateIndex = dataArray.findIndex(
+          (item: any) => item.date === data.date
+        );
+
+        if (dateIndex >= 0) {
+          // Update existing date entry
+          dataArray[dateIndex] = { ...dataArray[dateIndex], ...data };
+        } else {
+          // Add new date entry
+          dataArray.push({
+            date: data.date,
+            bakery: 0,
+            biscuit: 0,
+            cake: 0,
+            dairy_milk: 0,
+            lachcha: 0,
+            noodles: 0,
+            snacks: 0,
+            vermicelli: 0,
+            wafer: 0,
+            water_and_beverage: 0,
+            total_manpower: 0,
+            ...data,
+          });
+        }
+
+        // Update the document
+        await updateDoc(docRef, { data: dataArray });
+      } else {
+        // Create new document
+        const initialData = {
+          data: [
+            {
+              date: data.date,
+              bakery: 0,
+              biscuit: 0,
+              cake: 0,
+              dairy_milk: 0,
+              lachcha: 0,
+              noodles: 0,
+              snacks: 0,
+              vermicelli: 0,
+              wafer: 0,
+              water_and_beverage: 0,
+              total_manpower: 0,
+              ...data,
+            },
+          ],
+        };
+
+        await setDoc(docRef, initialData);
+      }
+    } catch (error) {
+      console.error("Error updating manpower data:", error);
+      throw error;
+    }
+  }
 }
 
 export default Firebase;

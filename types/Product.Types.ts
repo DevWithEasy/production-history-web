@@ -12,7 +12,6 @@ export interface Product {
     date: number;
     batch: number;
     carton: number;
-    manpower: number;
   }[];
 
   infos: {
