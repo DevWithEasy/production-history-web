@@ -9,6 +9,7 @@ import Calendar from "react-calendar";
 import "react-calendar/dist/Calendar.css";
 import { useReactToPrint } from "react-to-print";
 
+
 type ProductWithId = Product & { id: string };
 type GroupedData = Record<string, any[]>;
 type ManpowerData = Record<string, number> | undefined;
@@ -157,15 +158,12 @@ export default function Reports() {
     }
   }, [products, manpower, selectedDate]);
 
-  const handleCalendarChange = (date: Date | Date[] | null) => {
-    if (!(date instanceof Date)) return;
-    const selectedYear = date.getFullYear();
-    const selectedMonth = date.getMonth() + 1;
-    const day = date.getDate();
-    const newDate = new Date(selectedYear, selectedMonth - 1, day);
-    setSelectedDate(newDate);
-    findFilter(day);
-  };
+  const handleCalendarChange = (value: unknown) => {
+  if (!(value instanceof Date)) return;
+
+  setSelectedDate(value);
+  findFilter(value.getDate());
+};
 
   const sections = Object.keys(data).filter(
     (section) => data[section].length > 0
@@ -179,7 +177,7 @@ export default function Reports() {
   });
 
   return (
-    <div className="bg-gradient-to-br from-blue-50 to-gray-50 p-4 mb-16">
+    <div className="bg-linear-to-br from-blue-50 to-gray-50 p-4 mb-16">
       {/* প্রিন্ট বাটন */}
       <div className="fixed bottom-4 right-4 z-50 no-print">
         <button
