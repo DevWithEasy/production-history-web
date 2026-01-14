@@ -1,20 +1,19 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
-import { format } from "date-fns";
 import Firebase from "@/utils/firebase";
 import { getPeriod } from "@/utils/storage";
+import { format } from "date-fns";
 import {
-  Users,
-  Save,
-  Calculator,
-  BarChart3,
-  Calendar,
-  Loader2,
-  Plus,
-  CheckCircle,
   AlertCircle,
+  BarChart3,
+  Calculator,
+  Calendar,
+  CheckCircle,
+  Loader2,
+  Save,
+  Users,
 } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 
 interface SectionManpowerData {
   [date: string]: {
@@ -439,7 +438,7 @@ export default function ManpowerUpdate() {
               <h1 className="text-3xl font-bold text-gray-800">
                 ম্যানপাওয়ার ম্যানেজমেন্ট
               </h1>
-              <p className="text-gray-600 font-[family-name:var(--font-tiro-bangla)]">
+              <p className="text-gray-600">
                 {monthName} {year} - দৈনিক ম্যানপাওয়ার আপডেট
               </p>
             </div>
@@ -458,7 +457,7 @@ export default function ManpowerUpdate() {
                 <h3 className="font-semibold text-gray-800">
                   {monthName} {year}
                 </h3>
-                <p className="text-sm text-gray-600 font-[family-name:var(--font-tiro-bangla)]">
+                <p className="text-sm text-gray-600">
                   {sections.length} টি সেকশন, {lastDay} দিন
                 </p>
               </div>
@@ -514,7 +513,7 @@ export default function ManpowerUpdate() {
               <div className="flex items-center justify-center py-20">
                 <div className="text-center">
                   <Loader2 className="h-10 w-10 animate-spin text-blue-600 mx-auto mb-4" />
-                  <p className="text-gray-600 font-[family-name:var(--font-tiro-bangla)]">
+                  <p className="text-gray-600">
                     ম্যানপাওয়ার ডাটা লোড হচ্ছে...
                   </p>
                 </div>
@@ -591,9 +590,9 @@ export default function ManpowerUpdate() {
                               >
                                 <div className="relative">
                                   <input
-                                    ref={(el) =>
-                                      (inputRefs.current[fieldKey] = el)
-                                    }
+                                    ref={(el) => {
+                                      inputRefs.current[fieldKey] = el;
+                                    }}
                                     type="text"
                                     inputMode="numeric"
                                     defaultValue={currentValue}
@@ -665,7 +664,9 @@ export default function ManpowerUpdate() {
                           >
                             <div className="relative">
                               <input
-                                ref={(el) => (inputRefs.current[fieldKey] = el)}
+                                ref={(el) => {
+                                  inputRefs.current[fieldKey] = el;
+                                }}
                                 type="text"
                                 inputMode="numeric"
                                 defaultValue={currentValue}
@@ -749,7 +750,7 @@ export default function ManpowerUpdate() {
                     সেকশন ম্যানপাওয়ার
                   </span>
                 </div>
-                <p className="text-sm text-gray-600 font-[family-name:var(--font-tiro-bangla)]">
+                <p className="text-sm text-gray-600">
                   প্রতিটি সেকশনের দৈনিক ম্যানপাওয়ার এন্ট্রি করুন
                 </p>
               </div>
@@ -761,7 +762,7 @@ export default function ManpowerUpdate() {
                     টোটাল ম্যানপাওয়ার
                   </span>
                 </div>
-                <p className="text-sm text-blue-600 font-[family-name:var(--font-tiro-bangla)]">
+                <p className="text-sm text-blue-600">
                   দৈনিক মোট ম্যানপাওয়ার (স্বতন্ত্রভাবে গণনা করা হয়)
                 </p>
               </div>
@@ -773,7 +774,7 @@ export default function ManpowerUpdate() {
                     রিয়েল-টাইম সেভ
                   </span>
                 </div>
-                <p className="text-sm text-green-600 font-[family-name:var(--font-tiro-bangla)]">
+                <p className="text-sm text-green-600">
                   প্রতিটি ইনপুট ব্লার/এন্টারে স্বয়ংক্রিয়ভাবে সেভ হয়
                 </p>
               </div>
@@ -783,38 +784,38 @@ export default function ManpowerUpdate() {
 
         {/* Information Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="bg-gradient-to-r from-blue-50 to-white p-6 rounded-xl border border-blue-200">
+          <div className="bg-linear-to-r from-blue-50 to-white p-6 rounded-xl border border-blue-200">
             <div className="flex items-center gap-3 mb-4">
               <div className="bg-blue-100 p-3 rounded-lg">
                 <Users className="h-6 w-6 text-blue-600" />
               </div>
               <h4 className="font-bold text-gray-800">রিয়েল-টাইম আপডেট</h4>
             </div>
-            <p className="text-gray-600 text-sm font-[family-name:var(--font-tiro-bangla)]">
+            <p className="text-gray-600 text-sm">
               প্রতিটি পরিবর্তন স্বয়ংক্রিয়ভাবে ডাটাবেজে সংরক্ষণ হয়
             </p>
           </div>
 
-          <div className="bg-gradient-to-r from-green-50 to-white p-6 rounded-xl border border-green-200">
+          <div className="bg-linear-to-r from-green-50 to-white p-6 rounded-xl border border-green-200">
             <div className="flex items-center gap-3 mb-4">
               <div className="bg-green-100 p-3 rounded-lg">
                 <Calculator className="h-6 w-6 text-green-600" />
               </div>
               <h4 className="font-bold text-gray-800">অটো ক্যালকুলেশন</h4>
             </div>
-            <p className="text-gray-600 text-sm font-[family-name:var(--font-tiro-bangla)]">
+            <p className="text-gray-600 text-sm">
               টোটাল ও গ্র্যান্ড টোটাল স্বয়ংক্রিয়ভাবে গণনা হয়
             </p>
           </div>
 
-          <div className="bg-gradient-to-r from-purple-50 to-white p-6 rounded-xl border border-purple-200">
+          <div className="bg-linear-to-r from-purple-50 to-white p-6 rounded-xl border border-purple-200">
             <div className="flex items-center gap-3 mb-4">
               <div className="bg-purple-100 p-3 rounded-lg">
                 <BarChart3 className="h-6 w-6 text-purple-600" />
               </div>
               <h4 className="font-bold text-gray-800">ডেটা ভিজ্যুয়ালাইজেশন</h4>
             </div>
-            <p className="text-gray-600 text-sm font-[family-name:var(--font-tiro-bangla)]">
+            <p className="text-gray-600 text-sm">
               দৈনিক ও মাসিক রিপোর্ট এক নজরে দেখা যাবে
             </p>
           </div>
