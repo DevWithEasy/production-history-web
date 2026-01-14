@@ -247,8 +247,8 @@ export default function ManpowerUpdate() {
 
     const firebaseData = {
       date: dateNum,
-      total_manpower: numValue,
       ...currentData,
+      total_manpower: numValue,
     };
 
     const fieldKey = `total-${date}`;
