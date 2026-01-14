@@ -260,7 +260,7 @@ export default function Increment() {
     try {
       setLoading(true);
       const data = await Firebase.getDocument("increaments", increamentId);
-      if (data.exists) {
+      if (data.exists()) {
         const incrementData = data.data() as Increament;
         const processedData = {
           ...incrementData,
@@ -592,7 +592,20 @@ export default function Increment() {
                       }
                       className="w-full px-4 py-2.5 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
                     >
-                      {["বিস্কুট", "ওয়েফার", "কেক","বেকারি-০১","চানাচুর","পানি এবং বেভা.","ডেইরি মিল্ক","নুডুলস","ভারমিসলি","স্টোর","ডিস্ট্রিবিউশিন","এডমিন"].map((s) => (
+                      {[
+                        "বিস্কুট",
+                        "ওয়েফার",
+                        "কেক",
+                        "বেকারি-০১",
+                        "চানাচুর",
+                        "পানি এবং বেভা.",
+                        "ডেইরি মিল্ক",
+                        "নুডুলস",
+                        "ভারমিসলি",
+                        "স্টোর",
+                        "ডিস্ট্রিবিউশিন",
+                        "এডমিন",
+                      ].map((s) => (
                         <option key={s} value={s}>
                           {s}
                         </option>
@@ -887,9 +900,7 @@ export default function Increment() {
               {/* Header Content */}
               <div className="mb-8 print:mb-4">
                 <div className="whitespace-pre-line text-gray-800 text-base leading-relaxed">
-                  <p>
-                    তারিখ: {formatDateBangla(new Date())}
-                  </p>
+                  <p>তারিখ: {formatDateBangla(new Date())}</p>
                   {increament.header}
                 </div>
               </div>
