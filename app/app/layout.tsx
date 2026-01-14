@@ -11,10 +11,12 @@ import {
   Factory,
   Home,
   LogOut,
+  Menu,
   Package,
   PlusCircle,
   UserPlus,
   Users,
+  X,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -40,6 +42,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     products: false,
   });
 
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const { month, year } = getPeriod();
   const banglaMonthName = [
     "জানুয়ারি",
@@ -77,6 +80,11 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       manpower: isManpower,
       products: isProducts,
     });
+  }, [pathname]);
+
+  // Close sidebar when route changes on mobile
+  useEffect(() => {
+    setSidebarOpen(false);
   }, [pathname]);
 
   const toggleMenu = (menu: keyof typeof expandedMenus) => {
@@ -171,8 +179,28 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="flex h-screen bg-gray-50 font-[family-name:var(--font-tiro-bangla)]">
+      {/* Mobile Menu Button */}
+      <button
+        onClick={() => setSidebarOpen(true)}
+        className="lg:hidden fixed top-8 left-4 z-50 p-2 bg-blue-600 text-white rounded-lg shadow-lg"
+      >
+        <Menu className="h-5 w-5" />
+      </button>
+
       {/* Sidebar */}
-      <div className="w-64 bg-gradient-to-b from-blue-700 to-blue-500 text-white flex flex-col">
+      <div
+        className={`fixed lg:static inset-y-0 left-0 z-40 w-64 bg-linear-to-b from-blue-700 to-blue-500 text-white flex flex-col transform transition-transform duration-300 ease-in-out ${
+          sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
+        }`}
+      >
+        {/* Close button for mobile */}
+        <button
+          onClick={() => setSidebarOpen(false)}
+          className="lg:hidden absolute top-4 right-4 p-1 text-blue-200 hover:text-white"
+        >
+          <X className="h-5 w-5" />
+        </button>
+
         {/* Logo */}
         <div className="p-6 border-b border-blue-600">
           <div className="flex items-center gap-3">
@@ -201,6 +229,12 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                         {/* Main Menu Item as Link */}
                         <Link
                           href={item.href}
+                          onClick={() => {
+                            // On mobile, clicking main menu item expands submenu
+                            if (window.innerWidth < 1024) {
+                              toggleMenu(item.name.toLowerCase() as any);
+                            }
+                          }}
                           className={`flex-1 flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 ${
                             isItemActive
                               ? "bg-blue-700 text-white"
@@ -301,13 +335,21 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         </div>
       </div>
 
+      {/* Overlay for mobile */}
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 bg-gray-100/50 bg-opacity-50 z-30 lg:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
       {/* Main Content */}
       <div className="flex-1 overflow-hidden flex flex-col">
         {/* Top Bar */}
-        <div className="bg-white border-b px-6 py-4">
-          <div className="flex items-center justify-between">
+        <div className="bg-white border-b pl-16 lg:pl-0 px-4 lg:px-6 py-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
-              <h2 className="text-xl font-semibold text-gray-800">
+              <h2 className="text-lg sm:text-xl font-semibold text-gray-800">
                 {pathname === "/app" && "ড্যাশবোর্ড"}
                 {pathname === "/app/production" && "প্রোডাকশন ড্যাশবোর্ড"}
                 {isProduction &&
@@ -318,7 +360,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                 {isReports && "রিপোর্টস"}
                 {isIncrements && "বেতন বৃদ্ধি ব্যবস্থাপনা"}
               </h2>
-              <p className="text-sm text-gray-600">
+              <p className="text-xs sm:text-sm text-gray-600 mt-1">
                 {pathname === "/app" && "প্রধান প্যানেল"}
                 {pathname === "/app/production" &&
                   "সকল সেকশনের প্রোডাকশন সারসংক্ষেপ"}
@@ -332,9 +374,11 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
               </p>
             </div>
             <div className="flex items-center gap-4">
-              <div className="bg-blue-50 px-4 py-2 rounded-lg">
-                <p className="text-sm text-gray-600">বর্তমান পিরিয়ড</p>
-                <p className="font-semibold text-blue-700">
+              <div className="bg-blue-50 px-3 py-2 rounded-lg">
+                <p className="text-xs sm:text-sm text-gray-600">
+                  বর্তমান পিরিয়ড
+                </p>
+                <p className="font-semibold text-blue-700 text-sm sm:text-base">
                   {banglaMonthName} {formatNumber(year)}
                 </p>
               </div>
@@ -343,7 +387,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         </div>
 
         {/* Page Content */}
-        <div className="flex-1 overflow-y-auto">
+        <div className="flex-1 overflow-y-auto p-4 lg:p-6">
           <div className="max-w-7xl mx-auto">{children}</div>
         </div>
       </div>
