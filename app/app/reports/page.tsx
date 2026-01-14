@@ -93,7 +93,7 @@ export default function Reports() {
   const findFilter = (date: number) => {
     const filterData = products
       .map((product) => {
-        const { name, sku, section, data: productData } = product;
+        const { name, sku, section, price, data: productData } = product;
 
         const findDayProduction = productData.find((d) => d.date === date);
         const totalProduction = productData.filter((d) => d.date <= date);
@@ -110,6 +110,7 @@ export default function Reports() {
         return {
           name,
           sku,
+          price,
           section,
           batch: findDayProduction?.batch ?? 0,
           carton: findDayProduction?.carton ?? 0,
@@ -224,13 +225,17 @@ export default function Reports() {
           <div className="text-center">
             <h1 className="text-xl font-bold">Production Daily Report</h1>
             <p className="text-sm">
-              Month: {monthName} {year} | Date: {formattedDate}
+              1163, National Highway, Jerkachar, Muhammad Ali Bazar, Feni Sadar
+              Feni
             </p>
-            <p className="text-xs text-gray-600">
+            <p className="text-sm">
+              Period: {monthName} {year} | Date: {formattedDate}
+            </p>
+            {/* <p className="text-xs text-gray-600">
               Generated on: {new Date().toLocaleDateString()}
-            </p>
+            </p> */}
           </div>
-          <hr className="my-2 border-t border-gray-300" />
+          <hr className="my-2 border-t border-gray-600" />
         </div>
 
         <div className="overflow-x-auto">
@@ -275,12 +280,25 @@ export default function Reports() {
                       >
                         {index === 0 ? (
                           <td
-                            className="border border-gray-300 p-1 font-semibold text-center align-middle print:py-0 print:px-1"
+                            className="border border-gray-300 p-1 text-center align-middle print:py-0 print:px-1"
                             rowSpan={data[section].length}
                           >
-                            <span className="print:text-xs">
-                              {section.toUpperCase()}
-                            </span>
+                            <div className="-rotate-90 inline-block print:text-xs">
+                              <p className="font-semibold">
+                                {section.toUpperCase()}
+                              </p>
+                              <p>
+                                ({sections.reduce(
+                                  (sum, section) =>
+                                    sum +
+                                    data[section].reduce(
+                                      (s, p) => s + p.carton * p.price,
+                                      0
+                                    ),
+                                  0
+                                )})
+                              </p>
+                            </div>
                           </td>
                         ) : null}
                         <td className="border border-gray-300 p-1 print:py-0 print:px-1">

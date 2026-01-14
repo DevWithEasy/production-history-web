@@ -1,39 +1,32 @@
 "use client";
 
+import { getPeriod } from "@/utils/storage";
+import {
+  BarChart3,
+  Briefcase,
+  CalendarPlus,
+  ChevronDown,
+  ChevronRight,
+  DollarSign,
+  Factory,
+  Home,
+  LogOut,
+  Package,
+  PlusCircle,
+  UserPlus,
+  Users,
+} from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import Firebase from "../../utils/firebase";
 import { useEffect, useState } from "react";
-import { 
-  Home, 
-  Package, 
-  Users, 
-  FileText, 
-  PlusCircle, 
-  Calendar, 
-  DollarSign,
-  ChevronRight,
-  ChevronDown,
-  BarChart3,
-  Settings,
-  LogOut,
-  Factory,
-  Briefcase,
-  UserPlus,
-  FilePlus,
-  CalendarPlus
-} from "lucide-react";
+import Firebase from "../../utils/firebase";
 
 interface Section {
   id: string;
   name: string;
 }
 
-export default function AppLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
   const [sections, setSections] = useState<Section[]>([]);
@@ -44,8 +37,28 @@ export default function AppLayout({
   }>({
     production: false,
     manpower: false,
-    products: false
+    products: false,
   });
+
+  const { month, year } = getPeriod();
+  const banglaMonthName = [
+    "জানুয়ারি",
+    "ফেব্রুয়ারি",
+    "মার্চ",
+    "এপ্রিল",
+    "মে",
+    "জুন",
+    "জুলাই",
+    "আগস্ট",
+    "সেপ্টেম্বর",
+    "অক্টোবর",
+    "নভেম্বর",
+    "ডিসেম্বর",
+  ][month - 1];
+
+  const formatNumber = (num: number) => {
+    return num.toLocaleString("bn-BD");
+  };
 
   useEffect(() => {
     Firebase.getDocuments<Section>("sections").then(setSections);
@@ -62,14 +75,14 @@ export default function AppLayout({
     setExpandedMenus({
       production: isProduction,
       manpower: isManpower,
-      products: isProducts
+      products: isProducts,
     });
   }, [pathname]);
 
   const toggleMenu = (menu: keyof typeof expandedMenus) => {
-    setExpandedMenus(prev => ({
+    setExpandedMenus((prev) => ({
       ...prev,
-      [menu]: !prev[menu]
+      [menu]: !prev[menu],
     }));
   };
 
@@ -83,7 +96,7 @@ export default function AppLayout({
       name: "হোম",
       icon: Home,
       href: "/app",
-      exact: true
+      exact: true,
     },
     {
       name: "প্রোডাকশন",
@@ -94,14 +107,14 @@ export default function AppLayout({
         {
           name: "প্রোডাকশন ড্যাশবোর্ড",
           href: "/app/production",
-          icon: Factory
+          icon: Factory,
         },
-        ...sections.map(section => ({
+        ...sections.map((section) => ({
           name: section.name,
           href: `/app/production/${section.id}`,
-          icon: ChevronRight
-        }))
-      ]
+          icon: ChevronRight,
+        })),
+      ],
     },
     {
       name: "ম্যানপাওয়ার",
@@ -112,14 +125,14 @@ export default function AppLayout({
         {
           name: "ম্যানপাওয়ার ড্যাশবোর্ড",
           href: "/app/manpower",
-          icon: Users
+          icon: Users,
         },
         {
           name: "ম্যানপাওয়ার এন্ট্রি",
           href: "/app/manpower/update",
-          icon: UserPlus
-        }
-      ]
+          icon: UserPlus,
+        },
+      ],
     },
     {
       name: "প্রোডাক্ট ম্যানেজমেন্ট",
@@ -130,30 +143,30 @@ export default function AppLayout({
         {
           name: "সমস্ত প্রোডাক্ট",
           href: "/app/products",
-          icon: Package
+          icon: Package,
         },
         {
           name: "প্রোডাক্ট যোগ করুন",
           href: "/app/products/add",
-          icon: PlusCircle
+          icon: PlusCircle,
         },
         {
           name: "নতুন পিরিয়ড যোগ করুন",
           href: "/app/products/add-period",
-          icon: CalendarPlus
-        }
-      ]
+          icon: CalendarPlus,
+        },
+      ],
     },
     {
       name: "রিপোর্টস",
       icon: BarChart3,
-      href: "/app/reports"
+      href: "/app/reports",
     },
     {
       name: "বেতন বৃদ্ধি",
       icon: DollarSign,
-      href: "/app/increaments"
-    }
+      href: "/app/increaments",
+    },
   ];
 
   return (
@@ -179,7 +192,7 @@ export default function AppLayout({
             {navItems.map((item) => {
               const Icon = item.icon;
               const isItemActive = isActive(item.href);
-              
+
               return (
                 <div key={item.name}>
                   {item.hasSubmenu ? (
@@ -190,45 +203,51 @@ export default function AppLayout({
                           href={item.href}
                           className={`flex-1 flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 ${
                             isItemActive
-                              ? 'bg-blue-700 text-white'
-                              : 'hover:bg-blue-700/50 text-blue-100'
+                              ? "bg-blue-700 text-white"
+                              : "hover:bg-blue-700/50 text-blue-100"
                           }`}
                         >
                           <Icon className="h-5 w-5" />
                           <span className="font-medium">{item.name}</span>
                         </Link>
-                        
+
                         {/* Expand/Collapse Button */}
                         <button
-                          onClick={() => toggleMenu(item.name.toLowerCase() as any)}
+                          onClick={() =>
+                            toggleMenu(item.name.toLowerCase() as any)
+                          }
                           className={`px-2 rounded-r-lg transition-all duration-200 ${
                             isItemActive
-                              ? 'bg-blue-700 text-white'
-                              : 'hover:bg-blue-700/50 text-blue-100'
+                              ? "bg-blue-700 text-white"
+                              : "hover:bg-blue-700/50 text-blue-100"
                           }`}
                         >
-                          {expandedMenus[item.name.toLowerCase() as keyof typeof expandedMenus] ? (
+                          {expandedMenus[
+                            item.name.toLowerCase() as keyof typeof expandedMenus
+                          ] ? (
                             <ChevronDown className="h-4 w-4" />
                           ) : (
                             <ChevronRight className="h-4 w-4" />
                           )}
                         </button>
                       </div>
-                      
-                      {expandedMenus[item.name.toLowerCase() as keyof typeof expandedMenus] && (
+
+                      {expandedMenus[
+                        item.name.toLowerCase() as keyof typeof expandedMenus
+                      ] && (
                         <div className="ml-8 mt-1 space-y-1">
                           {item.subItems?.map((subItem) => {
                             const SubIcon = subItem.icon;
                             const isSubActive = isActive(subItem.href);
-                            
+
                             return (
                               <Link
                                 key={subItem.name}
                                 href={subItem.href}
                                 className={`flex items-center gap-3 px-4 py-2 rounded-lg transition-all duration-200 ${
                                   isSubActive
-                                    ? 'bg-blue-600 text-white'
-                                    : 'hover:bg-blue-700/30 text-blue-200'
+                                    ? "bg-blue-600 text-white"
+                                    : "hover:bg-blue-700/30 text-blue-200"
                                 }`}
                               >
                                 <SubIcon className="h-4 w-4" />
@@ -244,8 +263,8 @@ export default function AppLayout({
                       href={item.href}
                       className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 ${
                         isItemActive
-                          ? 'bg-blue-700 text-white'
-                          : 'hover:bg-blue-700/50 text-blue-100'
+                          ? "bg-blue-700 text-white"
+                          : "hover:bg-blue-700/50 text-blue-100"
                       }`}
                     >
                       <Icon className="h-5 w-5" />
@@ -268,7 +287,7 @@ export default function AppLayout({
               <p className="text-sm font-medium">প্রশাসক</p>
               <p className="text-xs text-blue-200">Admin Panel</p>
             </div>
-            <button 
+            <button
               onClick={() => {
                 localStorage.removeItem("pin_key");
                 router.push("/");
@@ -291,7 +310,9 @@ export default function AppLayout({
               <h2 className="text-xl font-semibold text-gray-800">
                 {pathname === "/app" && "ড্যাশবোর্ড"}
                 {pathname === "/app/production" && "প্রোডাকশন ড্যাশবোর্ড"}
-                {isProduction && pathname !== "/app/production" && "প্রোডাকশন ম্যানেজমেন্ট"}
+                {isProduction &&
+                  pathname !== "/app/production" &&
+                  "প্রোডাকশন ম্যানেজমেন্ট"}
                 {isManpower && "ম্যানপাওয়ার ম্যানেজমেন্ট"}
                 {isProducts && "প্রোডাক্ট ম্যানেজমেন্ট"}
                 {isReports && "রিপোর্টস"}
@@ -299,8 +320,11 @@ export default function AppLayout({
               </h2>
               <p className="text-sm text-gray-600">
                 {pathname === "/app" && "প্রধান প্যানেল"}
-                {pathname === "/app/production" && "সকল সেকশনের প্রোডাকশন সারসংক্ষেপ"}
-                {isProduction && pathname !== "/app/production" && "দৈনিক প্রোডাকশন ডাটা এন্ট্রি ও ব্যবস্থাপনা"}
+                {pathname === "/app/production" &&
+                  "সকল সেকশনের প্রোডাকশন সারসংক্ষেপ"}
+                {isProduction &&
+                  pathname !== "/app/production" &&
+                  "দৈনিক প্রোডাকশন ডাটা এন্ট্রি ও ব্যবস্থাপনা"}
                 {isManpower && "শ্রমিক সংখ্যা ও তথ্য ব্যবস্থাপনা"}
                 {isProducts && "প্রোডাক্ট তালিকা ও ক্যাটাগরি ব্যবস্থাপনা"}
                 {isReports && "প্রোডাকশন রিপোর্ট ও বিশ্লেষণ"}
@@ -310,7 +334,9 @@ export default function AppLayout({
             <div className="flex items-center gap-4">
               <div className="bg-blue-50 px-4 py-2 rounded-lg">
                 <p className="text-sm text-gray-600">বর্তমান পিরিয়ড</p>
-                <p className="font-semibold text-blue-700">ডিসেম্বর ২০২৬</p>
+                <p className="font-semibold text-blue-700">
+                  {banglaMonthName} {formatNumber(year)}
+                </p>
               </div>
             </div>
           </div>
@@ -318,9 +344,7 @@ export default function AppLayout({
 
         {/* Page Content */}
         <div className="flex-1 overflow-y-auto">
-          <div className="max-w-7xl mx-auto">
-            {children}
-          </div>
+          <div className="max-w-7xl mx-auto">{children}</div>
         </div>
       </div>
     </div>

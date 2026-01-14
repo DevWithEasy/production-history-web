@@ -87,7 +87,7 @@ export default function HomePage() {
   });
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-gray-50 p-4 md:p-6 font-[family-name:var(--font-tiro-bangla)]">
+    <div className="min-h-screen bg-linear-to-br from-blue-50 to-gray-50 p-4 md:p-6 font-[family-name:var(--font-tiro-bangla)]">
       <div className="max-w-6xl mx-auto">
         {/* হেডার সেকশন */}
         <div className="mb-8">
@@ -97,9 +97,7 @@ export default function HomePage() {
                 <Home className="inline-block mr-2 text-blue-600" />
                 এস এন্ড বি নাইস ফুড ভ্যালি লিঃ
               </h1>
-              <p className="text-gray-600 font-[family-name:var(--font-tiro-bangla)]">
-                প্রোডাকশন ম্যানেজমেন্ট সিস্টেম
-              </p>
+              <p className="text-gray-600">প্রোডাকশন ম্যানেজমেন্ট সিস্টেম</p>
             </div>
 
             {/* তারিখ ও সময় */}
@@ -107,9 +105,7 @@ export default function HomePage() {
               <div className="flex items-center gap-3">
                 <CalendarDays className="text-blue-600" />
                 <div>
-                  <p className="font-medium text-gray-800 font-[family-name:var(--font-tiro-bangla)]">
-                    {currentDate}
-                  </p>
+                  <p className="font-medium text-gray-800">{currentDate}</p>
                   <div className="flex items-center gap-2 text-sm text-gray-500">
                     <Clock className="w-4 h-4" />
                     <span>{currentTime}</span>
@@ -150,7 +146,7 @@ export default function HomePage() {
                         }`}
                       >
                         <div className="text-center">
-                          <div className="text-2xl font-bold">{y}</div>
+                          <div className="text-xl font-bold">{y}</div>
                           <div className="text-sm text-gray-500 mt-1">
                             {y === 2026 ? "বর্তমান" : ""}
                           </div>
@@ -178,7 +174,7 @@ export default function HomePage() {
                       >
                         <div className="text-center">
                           <div className="text-xl font-bold">{m.name}</div>
-                          <div className="text-sm text-gray-500 mt-1 font-[family-name:var(--font-tiro-bangla)]">
+                          <div className="text-sm text-gray-500 mt-1">
                             {banglaMonths[m.value - 1]}
                           </div>
                         </div>
@@ -188,14 +184,14 @@ export default function HomePage() {
                 </div>
 
                 {/* Selected Period Display */}
-                <div className="bg-gradient-to-r from-blue-100 to-green-100 p-6 rounded-xl border border-blue-200">
+                <div className="bg-linear-to-r from-blue-100 to-green-100 p-6 rounded-xl border border-blue-200">
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-gray-600 mb-2">বর্তমান পিরিয়ড</p>
                       <h3 className="text-3xl font-bold text-gray-800">
                         {months[month - 1]?.name} {year}
                       </h3>
-                      <p className="text-gray-600 mt-2 font-[family-name:var(--font-tiro-bangla)]">
+                      <p className="text-gray-600 mt-2">
                         {banglaMonths[month - 1]} {year}
                       </p>
                     </div>
@@ -214,7 +210,7 @@ export default function HomePage() {
 
             {/* Quick Stats */}
             <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="bg-gradient-to-r from-purple-50 to-pink-50 p-5 rounded-xl border border-purple-200">
+              <div className="bg-linear-to-r from-purple-50 to-pink-50 p-5 rounded-xl border border-purple-200">
                 <div className="flex items-center gap-3">
                   <div className="bg-purple-100 p-3 rounded-lg">
                     <Package className="text-purple-600" />
@@ -230,7 +226,7 @@ export default function HomePage() {
                 </div>
               </div>
 
-              <div className="bg-gradient-to-r from-green-50 to-blue-50 p-5 rounded-xl border border-green-200">
+              <div className="bg-linear-to-r from-green-50 to-blue-50 p-5 rounded-xl border border-green-200">
                 <div className="flex items-center gap-3">
                   <div className="bg-green-100 p-3 rounded-lg">
                     <Users className="text-green-600" />
@@ -249,7 +245,7 @@ export default function HomePage() {
           {/* ডান সাইড - তথ্য ও নির্দেশনা */}
           <div className="space-y-6">
             {/* App Info Card */}
-            <div className="bg-gradient-to-b from-blue-50 to-white rounded-xl shadow-lg p-6 border border-blue-200">
+            <div className="bg-linear-to-b from-blue-50 to-white rounded-xl shadow-lg p-6 border border-blue-200">
               <h3 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
                 <Settings className="text-blue-600" />
                 সিস্টেম তথ্য
@@ -271,7 +267,7 @@ export default function HomePage() {
             </div>
 
             {/* Instructions Card */}
-            <div className="bg-gradient-to-b from-green-50 to-white rounded-xl shadow-lg p-6 border border-green-200">
+            <div className="bg-linear-to-b from-green-50 to-white rounded-xl shadow-lg p-6 border border-green-200">
               <h3 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
                 <Bell className="text-green-600" />
                 নির্দেশাবলী
@@ -322,7 +318,7 @@ export default function HomePage() {
             </div>
 
             {/* Quick Actions */}
-            <div className="bg-gradient-to-b from-purple-50 to-white rounded-xl shadow-lg p-6 border border-purple-200">
+            <div className="bg-linear-to-b from-purple-50 to-white rounded-xl shadow-lg p-6 border border-purple-200">
               <h3 className="text-xl font-bold text-gray-800 mb-4">
                 দ্রুত একশন
               </h3>
@@ -363,7 +359,7 @@ export default function HomePage() {
 
         {/* ফুটার */}
         <div className="mt-10 pt-6 border-t border-gray-200 text-center text-gray-500 text-sm">
-          <p className="font-[family-name:var(--font-tiro-bangla)]">
+          <p className="">
             © ২০২৬ এস এন্ড বি নাইস ফুড ভ্যালি লিঃ | সমস্ত স্বত্ব সংরক্ষিত
           </p>
           <p className="mt-2">প্রোডাকশন ম্যানেজমেন্ট সিস্টেম | ভার্সন ১.০</p>

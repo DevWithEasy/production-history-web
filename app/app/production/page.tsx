@@ -567,10 +567,10 @@ export default function Dashboard() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-gray-50 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-linear-to-br from-blue-50 to-gray-50 flex items-center justify-center p-4 font-[family-name:var(--font-tiro-bangla)]">
         <div className="text-center space-y-6">
           <div className="relative">
-            <div className="w-20 h-20 mx-auto rounded-full bg-gradient-to-r from-blue-500 to-blue-600 animate-pulse flex items-center justify-center">
+            <div className="w-20 h-20 mx-auto rounded-full bg-linear-to-br from-blue-500 to-blue-600 animate-pulse flex items-center justify-center">
               <BarChart3 className="h-10 w-10 text-white" />
             </div>
             <div className="absolute inset-0 rounded-full border-4 border-transparent border-t-white animate-spin"></div>
@@ -579,9 +579,7 @@ export default function Dashboard() {
             <h2 className="text-xl font-bold text-gray-800 mb-2">
               ড্যাশবোর্ড লোড হচ্ছে
             </h2>
-            <p className="text-gray-600 font-[family-name:var(--font-tiro-bangla)]">
-              প্রোডাকশন ডাটা লোড করা হচ্ছে...
-            </p>
+            <p className="text-gray-600">প্রোডাকশন ডাটা লোড করা হচ্ছে...</p>
           </div>
           <div className="flex items-center justify-center gap-2 text-gray-500">
             <Loader2 className="h-5 w-5 animate-spin" />
@@ -594,7 +592,7 @@ export default function Dashboard() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-gray-50 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-linear-to-br from-blue-50 to-gray-50 flex items-center justify-center p-4">
         <div className="text-center max-w-md">
           <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
             <Database className="w-8 h-8 text-red-600" />
@@ -605,7 +603,7 @@ export default function Dashboard() {
           <p className="text-gray-600 mb-4">{error}</p>
           <button
             onClick={handleRefresh}
-            className="px-4 py-2 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg font-medium hover:from-blue-700 hover:to-blue-800 transition-all flex items-center gap-2 mx-auto"
+            className="px-4 py-2 bg-linear-to-br from-blue-600 to-blue-700 text-white rounded-lg font-medium hover:from-blue-700 hover:to-blue-800 transition-all flex items-center gap-2 mx-auto"
           >
             <RefreshCw className="w-4 h-4" />
             আবার চেষ্টা করুন
@@ -625,13 +623,13 @@ export default function Dashboard() {
           <h3 className="text-lg font-semibold text-gray-900 mb-2">
             কোনো প্রোডাকশন ডাটা নেই
           </h3>
-          <p className="text-gray-600 mb-4 font-[family-name:var(--font-tiro-bangla)]">
+          <p className="text-gray-600 mb-4">
             {currentMonthName} {currentYear} এর জন্য কোনো প্রোডাকশন ডাটা পাওয়া
             যায়নি।
           </p>
           <button
             onClick={handleRefresh}
-            className="px-4 py-2 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg font-medium hover:from-blue-700 hover:to-blue-800 transition-all flex items-center gap-2 mx-auto"
+            className="px-4 py-2 bg-linear-to-br from-blue-600 to-blue-700 text-white rounded-lg font-medium hover:from-blue-700 hover:to-blue-800 transition-all flex items-center gap-2 mx-auto"
           >
             <RefreshCw className="w-4 h-4" />
             ডাটা রিফ্রেশ করুন
@@ -642,19 +640,19 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-gray-50 p-4 md:p-6">
+    <div className="min-h-screen bg-linear-to-br from-blue-50 to-gray-50 p-4 md:p-6">
       <div className="max-w-7xl mx-auto">
         {/* Header Section */}
         <div className="mb-8">
           <div className="flex items-center gap-3 mb-4">
-            <div className="bg-gradient-to-r from-blue-600 to-blue-700 p-3 rounded-xl">
+            <div className="bg-linear-to-br from-blue-600 to-blue-700 p-3 rounded-xl">
               <BarChart3 className="h-8 w-8 text-white" />
             </div>
             <div>
               <h1 className="text-3xl font-bold text-gray-800">
                 প্রোডাকশন ড্যাশবোর্ড
               </h1>
-              <p className="text-gray-600 font-[family-name:var(--font-tiro-bangla)]">
+              <p className="text-gray-600">
                 {currentMonthName} {currentYear} - প্রোডাকশন বিশ্লেষণ ও তুলনা
               </p>
             </div>
@@ -665,7 +663,7 @@ export default function Dashboard() {
         <div className="mb-8">
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
             <div className="flex items-center gap-4">
-              <div className="bg-gradient-to-r from-blue-50 to-white p-4 rounded-xl border border-blue-200">
+              <div className="bg-linear-to-br from-blue-50 to-white p-4 rounded-xl border border-blue-200">
                 <div className="flex items-center gap-3">
                   <CalendarDays className="h-5 w-5 text-blue-600" />
                   <div>
@@ -677,7 +675,7 @@ export default function Dashboard() {
                 </div>
               </div>
 
-              <div className="bg-gradient-to-r from-gray-50 to-white p-4 rounded-xl border border-gray-200">
+              <div className="bg-linear-to-br from-gray-50 to-white p-4 rounded-xl border border-gray-200">
                 <div className="flex items-center gap-3">
                   <CalendarDays className="h-5 w-5 text-gray-500" />
                   <div>
@@ -717,7 +715,7 @@ export default function Dashboard() {
         </div>
 
         {/* Monthly Comparison Banner */}
-        <div className="mb-8 bg-gradient-to-r from-blue-50 to-purple-50 rounded-2xl border border-blue-200 p-6">
+        <div className="mb-8 bg-linear-to-br from-blue-50 to-purple-50 rounded-2xl border border-blue-200 p-6">
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-3">
               <div className="bg-blue-100 p-2 rounded-lg">
@@ -725,7 +723,7 @@ export default function Dashboard() {
               </div>
               <div>
                 <h3 className="text-lg font-bold text-gray-800">মাসিক তুলনা</h3>
-                <p className="text-gray-600 text-sm font-[family-name:var(--font-tiro-bangla)]">
+                <p className="text-gray-600 text-sm">
                   {currentMonthName} {currentYear} বনাম {prevMonthName}{" "}
                   {prevMonthInfo.year}
                 </p>
@@ -954,11 +952,11 @@ export default function Dashboard() {
                 <h4 className="text-lg font-bold text-gray-800">
                   বর্তমান মাসের উৎপাদন
                 </h4>
-                <p className="text-gray-600 text-sm font-[family-name:var(--font-tiro-bangla)]">
+                <p className="text-gray-600 text-sm">
                   {formatNumber(monthlyComparison.current.totalCarton)} কার্টন
                 </p>
               </div>
-              <div className="p-3 bg-gradient-to-r from-blue-100 to-blue-200 rounded-xl">
+              <div className="p-3 bg-linear-to-br from-blue-100 to-blue-200 rounded-xl">
                 <DollarSign className="h-6 w-6 text-blue-600" />
               </div>
             </div>
@@ -968,9 +966,7 @@ export default function Dashboard() {
               </div>
               <div className="mt-3 pt-3 border-t border-gray-100">
                 <div className="flex justify-between items-center text-sm">
-                  <span className="text-gray-600 font-[family-name:var(--font-tiro-bangla)]">
-                    পূর্ববর্তী মাস
-                  </span>
+                  <span className="text-gray-600">পূর্ববর্তী মাস</span>
                   <span className="font-medium text-gray-800">
                     {formatCurrency(monthlyComparison.previous.totalValue)}
                   </span>
@@ -986,7 +982,7 @@ export default function Dashboard() {
                 <h4 className="text-lg font-bold text-gray-800">
                   বর্তমান মাসের ম্যানপাওয়ার
                 </h4>
-                <p className="text-gray-600 text-sm font-[family-name:var(--font-tiro-bangla)]">
+                <p className="text-gray-600 text-sm">
                   {
                     Object.keys(monthlyComparison.current.sectionManpower)
                       .length
@@ -994,7 +990,7 @@ export default function Dashboard() {
                   টি সেকশন
                 </p>
               </div>
-              <div className="p-3 bg-gradient-to-r from-orange-100 to-orange-200 rounded-xl">
+              <div className="p-3 bg-linear-to-br from-orange-100 to-orange-200 rounded-xl">
                 <Users className="h-6 w-6 text-orange-600" />
               </div>
             </div>
@@ -1004,9 +1000,7 @@ export default function Dashboard() {
               </div>
               <div className="mt-3 pt-3 border-t border-gray-100">
                 <div className="flex justify-between items-center text-sm">
-                  <span className="text-gray-600 font-[family-name:var(--font-tiro-bangla)]">
-                    পূর্ববর্তী মাস
-                  </span>
+                  <span className="text-gray-600">পূর্ববর্তী মাস</span>
                   <span className="font-medium text-gray-800">
                     {formatNumber(monthlyComparison.previous.totalManpower)}
                   </span>
@@ -1020,11 +1014,11 @@ export default function Dashboard() {
             <div className="flex items-center justify-between mb-4">
               <div>
                 <h4 className="text-lg font-bold text-gray-800">উৎপাদনশীলতা</h4>
-                <p className="text-gray-600 text-sm font-[family-name:var(--font-tiro-bangla)]">
+                <p className="text-gray-600 text-sm">
                   মূল্য/ম্যানপাওয়ার অনুপাত
                 </p>
               </div>
-              <div className="p-3 bg-gradient-to-r from-purple-100 to-purple-200 rounded-xl">
+              <div className="p-3 bg-linear-to-br from-purple-100 to-purple-200 rounded-xl">
                 <TrendingUp className="h-6 w-6 text-purple-600" />
               </div>
             </div>
@@ -1036,9 +1030,7 @@ export default function Dashboard() {
               </div>
               <div className="mt-3 pt-3 border-t border-gray-100">
                 <div className="flex justify-between items-center text-sm">
-                  <span className="text-gray-600 font-[family-name:var(--font-tiro-bangla)]">
-                    পূর্ববর্তী মাস
-                  </span>
+                  <span className="text-gray-600">পূর্ববর্তী মাস</span>
                   <span className="font-medium text-gray-800">
                     {formatCurrency(
                       monthlyComparison.previous.productivity.valuePerManpower
@@ -1056,12 +1048,12 @@ export default function Dashboard() {
                 <h4 className="text-lg font-bold text-gray-800">
                   সক্রিয় সেকশন
                 </h4>
-                <p className="text-gray-600 text-sm font-[family-name:var(--font-tiro-bangla)]">
+                <p className="text-gray-600 text-sm">
                   পূর্ববর্তী মাসে{" "}
                   {monthlyComparison.previous.sectionData.length} টি
                 </p>
               </div>
-              <div className="p-3 bg-gradient-to-r from-green-100 to-green-200 rounded-xl">
+              <div className="p-3 bg-linear-to-br from-green-100 to-green-200 rounded-xl">
                 <Factory className="h-6 w-6 text-green-600" />
               </div>
             </div>
@@ -1071,9 +1063,7 @@ export default function Dashboard() {
               </div>
               <div className="mt-3 pt-3 border-t border-gray-100">
                 <div className="flex justify-between items-center text-sm">
-                  <span className="text-gray-600 font-[family-name:var(--font-tiro-bangla)]">
-                    নতুন সেকশন
-                  </span>
+                  <span className="text-gray-600">নতুন সেকশন</span>
                   <span className="font-medium text-green-600">
                     {
                       currentMonthStats.sectionData.filter(
@@ -1102,7 +1092,7 @@ export default function Dashboard() {
                 <h3 className="text-lg font-bold text-gray-800">
                   সেকশন ওভারভিউ
                 </h3>
-                <p className="text-gray-600 text-sm font-[family-name:var(--font-tiro-bangla)]">
+                <p className="text-gray-600 text-sm">
                   {allSections.length} টি সেকশন |{" "}
                   {currentMonthStats.sectionData.length} টি সক্রিয়
                 </p>
@@ -1136,7 +1126,7 @@ export default function Dashboard() {
                   }`}
                 >
                   <div className="flex items-center justify-between mb-3">
-                    <h4 className="font-semibold text-gray-900 font-[family-name:var(--font-tiro-bangla)]">
+                    <h4 className="font-semibold text-gray-900">
                       {formatSectionName(section)}
                     </h4>
                     {isNewSection && (
@@ -1184,7 +1174,7 @@ export default function Dashboard() {
                       </>
                     ) : (
                       <div className="text-center py-2">
-                        <span className="text-sm text-gray-500 font-[family-name:var(--font-tiro-bangla)]">
+                        <span className="text-sm text-gray-500">
                           এই মাসে উৎপাদন নেই
                         </span>
                       </div>
@@ -1211,7 +1201,7 @@ export default function Dashboard() {
                     <h3 className="text-lg font-bold text-gray-800">
                       সেরা পারফর্মিং সেকশন
                     </h3>
-                    <p className="text-gray-600 text-sm font-[family-name:var(--font-tiro-bangla)]">
+                    <p className="text-gray-600 text-sm">
                       বর্তমান মাসের শীর্ষ ৩ সেকশন
                     </p>
                   </div>
@@ -1257,10 +1247,10 @@ export default function Dashboard() {
                             <div
                               className={`w-12 h-12 rounded-xl flex items-center justify-center ${
                                 idx === 0
-                                  ? "bg-gradient-to-r from-yellow-100 to-yellow-200 text-yellow-600"
+                                  ? "bg-linear-to-br from-yellow-100 to-yellow-200 text-yellow-600"
                                   : idx === 1
-                                  ? "bg-gradient-to-r from-gray-100 to-gray-200 text-gray-600"
-                                  : "bg-gradient-to-r from-orange-100 to-orange-200 text-orange-600"
+                                  ? "bg-linear-to-br from-gray-100 to-gray-200 text-gray-600"
+                                  : "bg-linear-to-br from-orange-100 to-orange-200 text-orange-600"
                               }`}
                             >
                               <span className="font-bold text-xl">
@@ -1268,12 +1258,13 @@ export default function Dashboard() {
                               </span>
                             </div>
                             <div>
-                              <h4 className="font-semibold text-gray-900 font-[family-name:var(--font-tiro-bangla)]">
+                              <h4 className="font-semibold text-gray-900">
                                 {formatSectionName(section.name)}
                               </h4>
                               <div className="flex items-center gap-3 mt-1">
                                 <span className="text-sm text-gray-500">
-                                  {formatNumber(section.products.length)} টি প্রোডাক্ট
+                                  {formatNumber(section.products.length)} টি
+                                  প্রোডাক্ট
                                 </span>
                                 <div className="flex items-center gap-1">
                                   <Users className="w-3 h-3 text-blue-500" />
@@ -1291,7 +1282,7 @@ export default function Dashboard() {
                             <div className="flex items-center justify-end gap-2 mt-2">
                               <div className="w-24 bg-gray-200 rounded-full h-2">
                                 <div
-                                  className="bg-gradient-to-r from-blue-500 to-blue-600 h-2 rounded-full"
+                                  className="bg-linear-to-br from-blue-500 to-blue-600 h-2 rounded-full"
                                   style={{
                                     width: `${Math.min(percentage, 100)}%`,
                                   }}
@@ -1309,9 +1300,7 @@ export default function Dashboard() {
                 </div>
               ) : (
                 <div className="text-center py-8">
-                  <p className="text-gray-500 font-[family-name:var(--font-tiro-bangla)]">
-                    কোনো সেকশন ডাটা পাওয়া যায়নি
-                  </p>
+                  <p className="text-gray-500">কোনো সেকশন ডাটা পাওয়া যায়নি</p>
                 </div>
               )}
             </div>
@@ -1361,7 +1350,7 @@ export default function Dashboard() {
                           key={section.name}
                           className="flex justify-between items-center text-sm"
                         >
-                          <span className="text-green-700 font-[family-name:var(--font-tiro-bangla)]">
+                          <span className="text-green-700">
                             {formatSectionName(section.name)}
                           </span>
                           <span className="font-medium">
@@ -1402,7 +1391,7 @@ export default function Dashboard() {
                           key={section.name}
                           className="flex justify-between items-center text-sm"
                         >
-                          <span className="text-gray-600 font-[family-name:var(--font-tiro-bangla)]">
+                          <span className="text-gray-600">
                             {formatSectionName(section.name)}
                           </span>
                           <span className="text-gray-500">
@@ -1432,12 +1421,12 @@ export default function Dashboard() {
                 {currentMonthStats.topSections.length > 0 &&
                   monthlyComparison.current.totalValue > 0 && (
                     <div className="flex items-start gap-3 p-4 bg-yellow-50 rounded-xl border border-yellow-200">
-                      <AlertCircle className="w-5 h-5 text-yellow-600 mt-0.5 flex-shrink-0" />
+                      <AlertCircle className="w-5 h-5 text-yellow-600 mt-0.5" />
                       <div>
                         <p className="font-semibold text-yellow-800">
                           শীর্ষ পারফর্মার
                         </p>
-                        <p className="text-sm text-yellow-700 mt-1 font-[family-name:var(--font-tiro-bangla)]">
+                        <p className="text-sm text-yellow-700 mt-1">
                           <span className="font-bold">
                             {formatSectionName(
                               currentMonthStats.topSections[0]?.name
@@ -1461,7 +1450,7 @@ export default function Dashboard() {
                       <p className="font-semibold text-blue-800">
                         সামগ্রিক বৃদ্ধি
                       </p>
-                      <p className="text-sm text-blue-700 mt-1 font-[family-name:var(--font-tiro-bangla)]">
+                      <p className="text-sm text-blue-700 mt-1">
                         উৎপাদন মূল্য{" "}
                         {monthlyComparison.current.totalValue >=
                         monthlyComparison.previous.totalValue
@@ -1498,7 +1487,7 @@ export default function Dashboard() {
                           <p className="font-semibold text-purple-800">
                             সর্বোচ্চ ম্যানপাওয়ার
                           </p>
-                          <p className="text-sm text-purple-700 mt-1 font-[family-name:var(--font-tiro-bangla)]">
+                          <p className="text-sm text-purple-700 mt-1">
                             {formatSectionName(highestManpower[0])} এর সর্বোচ্চ
                             ম্যানপাওয়ার: {formatNumber(highestManpower[1])} দিন
                           </p>
@@ -1512,7 +1501,7 @@ export default function Dashboard() {
         </div>
 
         {/* Summary Statistics */}
-        <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-2xl p-6">
+        <div className="bg-linear-to-br from-blue-600 to-blue-700 text-white rounded-2xl p-6">
           <div className="flex items-center gap-3 mb-6">
             <CheckCircle className="h-6 w-6 text-white" />
             <h3 className="text-lg font-bold">মাসিক তুলনা সারসংক্ষেপ</h3>
