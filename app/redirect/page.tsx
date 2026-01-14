@@ -3,7 +3,15 @@
 import { useState, useEffect, useRef, KeyboardEvent } from "react";
 import { useRouter } from "next/navigation";
 import Firebase from "@/utils/firebase";
-import { Lock, Key, Loader2, CheckCircle, Shield, LogIn, Fingerprint } from "lucide-react";
+import {
+  Lock,
+  Key,
+  Loader2,
+  CheckCircle,
+  Shield,
+  LogIn,
+  Fingerprint,
+} from "lucide-react";
 
 interface PinDocument {
   id: string;
@@ -19,7 +27,7 @@ export default function RedirectPage() {
   const [error, setError] = useState("");
   const [verifying, setVerifying] = useState(false);
   const [success, setSuccess] = useState(false);
-  
+
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
   useEffect(() => {
@@ -29,7 +37,7 @@ export default function RedirectPage() {
   const checkStoredPin = async () => {
     try {
       const storedPin = localStorage.getItem("pin_key");
-      
+
       if (!storedPin) {
         setShowPinInput(true);
         setLoading(false);
@@ -37,7 +45,7 @@ export default function RedirectPage() {
       }
 
       const pins = await Firebase.getDocuments<PinDocument>("pins");
-      const matchedPin = pins.find(pinDoc => pinDoc.pin === storedPin);
+      const matchedPin = pins.find((pinDoc) => pinDoc.pin === storedPin);
 
       if (matchedPin) {
         setSuccess(true);
@@ -58,7 +66,7 @@ export default function RedirectPage() {
 
   const handlePinChange = (index: number, value: string) => {
     if (!/^\d?$/.test(value)) return;
-    
+
     const newPin = [...pin];
     newPin[index] = value;
     setPin(newPin);
@@ -77,7 +85,7 @@ export default function RedirectPage() {
 
   const verifyPin = async () => {
     const pinString = pin.join("");
-    
+
     if (pinString.length !== 4) {
       setError("দয়া করে ৪ ডিজিটের পিন দিন");
       return;
@@ -87,7 +95,7 @@ export default function RedirectPage() {
 
     try {
       const pins = await Firebase.getDocuments<PinDocument>("pins");
-      const matchedPin = pins.find(pinDoc => pinDoc.pin === pinString);
+      const matchedPin = pins.find((pinDoc) => pinDoc.pin === pinString);
 
       if (matchedPin) {
         localStorage.setItem("pin_key", pinString);
@@ -118,10 +126,10 @@ export default function RedirectPage() {
             <div className="absolute inset-0 rounded-full border-4 border-transparent border-t-white animate-spin"></div>
           </div>
           <div>
-            <h2 className="text-xl font-bold text-gray-800 mb-2">চেক করা হচ্ছে</h2>
-            <p className="text-gray-600">
-              সেভ করা পিন যাচাই করা হচ্ছে...
-            </p>
+            <h2 className="text-xl font-bold text-gray-800 mb-2">
+              চেক করা হচ্ছে
+            </h2>
+            <p className="text-gray-600">সেভ করা পিন যাচাই করা হচ্ছে...</p>
           </div>
           <div className="flex items-center justify-center gap-2 text-gray-500">
             <Loader2 className="h-5 w-5 animate-spin" />
@@ -147,7 +155,9 @@ export default function RedirectPage() {
             </div>
           </div>
           <div>
-            <h2 className="text-2xl font-bold text-gray-800 mb-2">সফলভাবে প্রবেশ!</h2>
+            <h2 className="text-2xl font-bold text-gray-800 mb-2">
+              সফলভাবে প্রবেশ!
+            </h2>
             <p className="text-gray-600">
               পিন সঠিক। অ্যাপে রিডাইরেক্ট করা হচ্ছে...
             </p>
@@ -174,7 +184,9 @@ export default function RedirectPage() {
               <Lock className="h-8 w-8 text-white" />
             </div>
             <div>
-              <h1 className="text-3xl font-bold text-gray-800">সুরক্ষা প্রবেশ</h1>
+              <h1 className="text-3xl font-bold text-gray-800">
+                সুরক্ষা প্রবেশ
+              </h1>
               <p className="text-gray-600">
                 প্রোডাকশন সিস্টেমে প্রবেশ করতে পিন দিন
               </p>
@@ -190,15 +202,19 @@ export default function RedirectPage() {
               <div className="text-center">
                 <div className="flex items-center justify-center gap-2 text-gray-600 mb-4">
                   <Key className="h-5 w-5 text-blue-600" />
-                  <span className="text-sm font-medium">৪ ডিজিট সুরক্ষা পিন</span>
+                  <span className="text-sm font-medium">
+                    ৪ ডিজিট সুরক্ষা পিন
+                  </span>
                 </div>
-                
+
                 {/* PIN Boxes */}
                 <div className="flex justify-center gap-4 mb-6">
                   {pin.map((digit, index) => (
                     <div key={index} className="relative">
                       <input
-                        ref={el => inputRefs.current[index] = el}
+                        ref={(el) => {
+                          inputRefs.current[index] = el;
+                        }}
                         type="password"
                         maxLength={1}
                         value={digit}
@@ -224,7 +240,9 @@ export default function RedirectPage() {
                 {error && (
                   <div className="flex items-center justify-center gap-2 text-red-500 bg-red-50 border border-red-200 rounded-lg p-3 mb-4 animate-pulse">
                     <Shield className="h-5 w-5" />
-                    <span className="font-[family-name:var(--font-tiro-bangla)]">{error}</span>
+                    <span className="font-[family-name:var(--font-tiro-bangla)]">
+                      {error}
+                    </span>
                   </div>
                 )}
               </div>
@@ -232,9 +250,9 @@ export default function RedirectPage() {
               {/* Submit Button */}
               <button
                 onClick={verifyPin}
-                disabled={verifying || pin.some(d => !d)}
+                disabled={verifying || pin.some((d) => !d)}
                 className={`w-full py-4 rounded-xl font-semibold text-lg transition-all duration-200 flex items-center justify-center gap-3 ${
-                  verifying || pin.some(d => !d)
+                  verifying || pin.some((d) => !d)
                     ? "bg-gray-200 text-gray-400 cursor-not-allowed"
                     : "bg-gradient-to-r from-blue-600 to-blue-700 text-white hover:from-blue-700 hover:to-blue-800 hover:shadow-lg"
                 }`}
@@ -260,9 +278,11 @@ export default function RedirectPage() {
                   <Key className="h-5 w-5 text-blue-600" />
                 </div>
                 <div>
-                  <h4 className="font-semibold text-gray-800 mb-1">পিন সম্পর্কে তথ্য</h4>
+                  <h4 className="font-semibold text-gray-800 mb-1">
+                    পিন সম্পর্কে তথ্য
+                  </h4>
                   <p className="text-gray-600 text-sm">
-                    পিন একবার সঠিকভাবে দিলে এটি আপনার ডিভাইসে সংরক্ষণ হবে। 
+                    পিন একবার সঠিকভাবে দিলে এটি আপনার ডিভাইসে সংরক্ষণ হবে।
                     পরবর্তীতে অটোমেটিকভাবে লগইন হবে।
                   </p>
                 </div>
@@ -284,7 +304,7 @@ export default function RedirectPage() {
               পিন শুধু আপনার ডিভাইসে সংরক্ষণ হবে
             </p>
           </div>
-          
+
           <div className="bg-gradient-to-r from-green-50 to-white p-4 rounded-xl border border-green-200">
             <div className="flex items-center gap-2 mb-3">
               <div className="bg-green-100 p-2 rounded-lg">
@@ -292,11 +312,9 @@ export default function RedirectPage() {
               </div>
               <h4 className="font-semibold text-gray-800">অটো লগইন</h4>
             </div>
-            <p className="text-gray-600 text-xs">
-              পরবর্তীতে অটোমেটিক প্রবেশ
-            </p>
+            <p className="text-gray-600 text-xs">পরবর্তীতে অটোমেটিক প্রবেশ</p>
           </div>
-          
+
           <div className="bg-gradient-to-r from-purple-50 to-white p-4 rounded-xl border border-purple-200">
             <div className="flex items-center gap-2 mb-3">
               <div className="bg-purple-100 p-2 rounded-lg">
