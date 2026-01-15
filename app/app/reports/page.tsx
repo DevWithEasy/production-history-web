@@ -126,7 +126,7 @@ export default function Reports() {
   const findFilter = (date: number) => {
     const filterData = products
       .map((product) => {
-        const { name, sku, section, price, data: productData } = product;
+        const { name, sku, code, section, price, data: productData } = product;
 
         const findDayProduction = productData.find((d) => d.date === date);
         const totalProduction = productData.filter((d) => d.date <= date);
@@ -143,6 +143,7 @@ export default function Reports() {
         return {
           name,
           sku,
+          code,
           price,
           section,
           batch: findDayProduction?.batch ?? 0,
@@ -172,8 +173,15 @@ export default function Reports() {
     }, {});
 
     setData(groupedBySection);
-    const findMP = manpower?.data.find((m) => m.date === date);
+    
+    // সঠিকভাবে ম্যানপাওয়ার ডাটা পাওয়ার জন্য
+    const findMP = manpower?.data?.find((m) => m.date === date);
     setMp(findMP);
+    
+    // ডিবাগ করার জন্য (শুধু ডেভেলপমেন্টে)
+    console.log("Selected date:", date);
+    console.log("Manpower data for date:", findMP);
+    console.log("All manpower:", manpower);
   };
 
   useEffect(() => {
@@ -182,6 +190,9 @@ export default function Reports() {
       setProducts(p);
       const mp = await Firebase.getManpowerByPeriod<ManPower>(year, monthName);
       setManpower(mp);
+      
+      // ডিবাগ লগ
+      console.log("Loaded manpower data:", mp);
     };
     run();
   }, [year, monthName]);
@@ -202,6 +213,40 @@ export default function Reports() {
   const sections = Object.keys(data).filter(
     (section) => data[section].length > 0
   );
+
+  // প্রতিটি সেকশনের ম্যানপাওয়ার পাওয়ার জন্য হেল্পার ফাংশন
+  const getSectionManpower = (section: string): number => {
+    if (!mp) return 0;
+    
+    // প্রোডাক্টের সেকশন এবং ম্যানপাওয়ার ডাটার কীগুলো ম্যাচ করানোর জন্য
+    const sectionMap: Record<string, string> = {
+      'bakery': 'bakery',
+      'biscuit': 'biscuit', 
+      'cake': 'cake',
+      'dairy_milk': 'dairy_milk',
+      'lachcha': 'lachcha',
+      'noodles': 'noodles',
+      'snacks': 'snacks',
+      'vermicelli': 'vermicelli',
+      'wafer': 'wafer',
+      'water_and_beverage': 'water_and_beverage'
+    };
+    
+    const manpowerKey = sectionMap[section];
+    if (!manpowerKey) return 0;
+    
+    // mp অবজেক্ট থেকে মান পাওয়ার জন্য
+    const manpowerValue = mp[manpowerKey as keyof typeof mp];
+    
+    // যদি undefined হয় তাহলে 0 রিটার্ন করুন
+    return typeof manpowerValue === 'number' ? manpowerValue : 0;
+  };
+
+  // মোট ম্যানপাওয়ার
+  const getTotalManpower = (): number => {
+    if (!mp) return 0;
+    return mp.total_manpower || 0;
+  };
 
   // প্রতিটি সেকশনের মোট কার্টন ভ্যালু (প্রাইস * কার্টন)
   const getSectionCartonValue = (section: string): number => {
@@ -227,6 +272,24 @@ export default function Reports() {
     month: "short",
     year: "numeric",
   });
+
+  // সেকশন নাম ডিসপ্লে করার জন্য
+  const getDisplaySectionName = (section: string): string => {
+    const sectionNames: Record<string, string> = {
+      'bakery': 'Bakery',
+      'biscuit': 'Biscuit',
+      'cake': 'Cake',
+      'dairy_milk': 'Dairy Milk',
+      'lachcha': 'Lachcha',
+      'noodles': 'Noodles',
+      'snacks': 'Snacks',
+      'vermicelli': 'Vermicelli',
+      'wafer': 'Wafer',
+      'water_and_beverage': 'WTP'
+    };
+    
+    return sectionNames[section] || section;
+  };
 
   return (
     <div className="bg-linear-to-br from-blue-50 to-gray-50 p-4 mb-16">
@@ -331,8 +394,8 @@ export default function Reports() {
                             rowSpan={data[section].length}
                           >
                             <div className="section-content">
-                              <p className="font-semibold text-xs print:text-[10px] leading-tight capitalize">
-                                {section}
+                              <p className="font-semibold text-xs print:text-[10px] leading-tight">
+                                {getDisplaySectionName(section)}
                               </p>
                               <p className="text-xs print:text-[9px]">
                                 (৳{getSectionCartonValue(section).toFixed(0)})
@@ -343,7 +406,7 @@ export default function Reports() {
                         <td className="border border-gray-300 p-1 print:py-0 print:px-1 product-column">
                           <div className="product-info">
                             <div className="product-name text-sm print:text-xs text-left">
-                              {product.name}
+                              [{product.code}] {product.name}
                             </div>
                           </div>
                         </td>
@@ -369,7 +432,7 @@ export default function Reports() {
                             rowSpan={data[section].length}
                           >
                             <span className="print:text-xs">
-                              {mp?.[section] || 0}
+                              {getSectionManpower(section)}
                             </span>
                           </td>
                         ) : null}
@@ -437,10 +500,7 @@ export default function Reports() {
                   </td>
                   <td className="border border-gray-300 p-1 text-center print:py-0 print:px-1 mp-column">
                     <span className="print:text-xs">
-                      {sections.reduce(
-                        (sum, section) => sum + (mp?.[section] || 0),
-                        0
-                      )}
+                      {getTotalManpower()}
                     </span>
                   </td>
                 </tr>

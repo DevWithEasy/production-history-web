@@ -33,18 +33,18 @@ type ManpowerResponse = {
 export default function ManpowerUpdate() {
   const { year, month } = getPeriod();
   const monthName = [
-    "জানুয়ারি",
-    "ফেব্রুয়ারি",
-    "মার্চ",
-    "এপ্রিল",
-    "মে",
-    "জুন",
-    "জুলাই",
-    "আগস্ট",
-    "সেপ্টেম্বর",
-    "অক্টোবর",
-    "নভেম্বর",
-    "ডিসেম্বর",
+    "January",
+    "February",
+    "March",
+    "April",
+    "May",
+    "June",
+    "July",
+    "August",
+    "September",
+    "October",
+    "November",
+    "December",
   ][month - 1];
 
   const sections = [
@@ -531,7 +531,7 @@ export default function ManpowerUpdate() {
                       {daysArray.map((day) => (
                         <th
                           key={day}
-                          className="p-4 text-center min-w-28 border-l border-gray-200"
+                          className="p-4 text-center min-w-20 border-l border-gray-200"
                         >
                           <div className="space-y-1">
                             <div className="font-medium text-gray-800">
@@ -543,7 +543,7 @@ export default function ManpowerUpdate() {
                           </div>
                         </th>
                       ))}
-                      <th className="p-4 text-center min-w-32 bg-gray-100 border-l border-gray-300">
+                      <th className="p-4 text-center min-w-28 bg-gray-100 border-l border-gray-300">
                         <div className="space-y-1">
                           <div className="font-medium text-gray-800">মোট</div>
                           <div className="text-xs text-gray-500">পুরো মাস</div>
@@ -586,7 +586,7 @@ export default function ManpowerUpdate() {
                             return (
                               <td
                                 key={day}
-                                className="p-4 border-l border-gray-200"
+                                className="p-3 border-l border-gray-200"
                               >
                                 <div className="relative">
                                   <input
@@ -611,7 +611,7 @@ export default function ManpowerUpdate() {
                                         handleSectionBlur(section.id, dateStr)
                                       )
                                     }
-                                    className="w-full h-10 px-3 text-center border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                                    className="w-16 h-10 px-2 text-center border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
                                     disabled={isSaving[fieldKey]}
                                   />
                                   {isSaving[fieldKey] && (
@@ -624,7 +624,7 @@ export default function ManpowerUpdate() {
                             );
                           })}
 
-                          <td className="p-4 text-center bg-gray-50 border-l border-gray-300">
+                          <td className="p-3 text-center bg-gray-50 border-l border-gray-300">
                             <div className="font-semibold text-gray-800 text-lg">
                               {sectionTotal}
                             </div>
@@ -660,7 +660,7 @@ export default function ManpowerUpdate() {
                         return (
                           <td
                             key={day}
-                            className="p-4 border-l border-blue-200"
+                            className="p-3 border-l border-blue-200"
                           >
                             <div className="relative">
                               <input
@@ -679,7 +679,7 @@ export default function ManpowerUpdate() {
                                     handleTotalBlur(dateStr)
                                   )
                                 }
-                                className="w-full h-10 px-3 text-center border border-blue-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all bg-white"
+                                className="w-16 h-10 px-2 text-center border border-blue-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all bg-white"
                                 disabled={isSaving[fieldKey]}
                               />
                               {isSaving[fieldKey] && (
@@ -692,7 +692,7 @@ export default function ManpowerUpdate() {
                         );
                       })}
 
-                      <td className="p-4 text-center bg-blue-100 border-l border-blue-300">
+                      <td className="p-3 text-center bg-blue-100 border-l border-blue-300">
                         <div className="font-semibold text-blue-900 text-lg">
                           {getMonthTotalManpower()}
                         </div>
@@ -720,7 +720,7 @@ export default function ManpowerUpdate() {
                       {daysArray.map((day) => (
                         <td
                           key={day}
-                          className="p-4 text-center border-l border-gray-300"
+                          className="p-3 text-center border-l border-gray-300"
                         >
                           <div className="font-semibold text-gray-800">
                             {getColumnTotal(day)}
@@ -728,7 +728,7 @@ export default function ManpowerUpdate() {
                         </td>
                       ))}
 
-                      <td className="p-4 text-center bg-gray-200 border-l border-gray-400">
+                      <td className="p-3 text-center bg-gray-200 border-l border-gray-400">
                         <div className="font-bold text-gray-900 text-xl">
                           {getGrandTotal()}
                         </div>
