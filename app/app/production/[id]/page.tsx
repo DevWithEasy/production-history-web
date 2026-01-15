@@ -1,8 +1,17 @@
 "use client";
 
+import Firebase from "@/utils/firebase";
 import { db } from "@/utils/firebaseConfig";
 import { getPeriod } from "@/utils/storage";
-import { collection, doc, getDoc, getDocs, query, updateDoc, where } from "firebase/firestore";
+import {
+  collection,
+  doc,
+  getDoc,
+  getDocs,
+  query,
+  updateDoc,
+  where,
+} from "firebase/firestore";
 import {
   AlertCircle,
   BarChart3,
@@ -54,6 +63,13 @@ type ProductWithStats = Product & {
   };
 };
 
+type Entry = {
+  data: {
+    date: number;
+    checked: boolean;
+  }[];
+};
+
 export default function SectionProductionPage() {
   const params = useParams();
   const sectionId = params.id as string;
@@ -64,7 +80,8 @@ export default function SectionProductionPage() {
   const [message, setMessage] = useState({ type: "", text: "" });
   const [savedFields, setSavedFields] = useState<Set<string>>(new Set());
   const [failedFields, setFailedFields] = useState<Set<string>>(new Set());
-  
+  const [entries, setEntries] = useState<Entry | null>(null);
+
   // নতুন স্টেট: কমপ্যাক্ট ভিউ টগল
   const [compactView, setCompactView] = useState(false);
 
@@ -94,9 +111,19 @@ export default function SectionProductionPage() {
 
   // বাংলা মাসের নাম
   const banglaMonthNames = [
-    "জানুয়ারি", "ফেব্রুয়ারি", "মার্চ", "এপ্রিল", "মে", "জুন",
-    "জুলাই", "আগস্ট", "সেপ্টেম্বর", "অক্টোবর", "নভেম্বর", "ডিসেম্বর"
-  ]
+    "জানুয়ারি",
+    "ফেব্রুয়ারি",
+    "মার্চ",
+    "এপ্রিল",
+    "মে",
+    "জুন",
+    "জুলাই",
+    "আগস্ট",
+    "সেপ্টেম্বর",
+    "অক্টোবর",
+    "নভেম্বর",
+    "ডিসেম্বর",
+  ];
 
   const banglaMonthName = banglaMonthNames[month - 1];
 
@@ -163,7 +190,7 @@ export default function SectionProductionPage() {
 
   // Show success feedback
   const showSuccessFeedback = (fieldKey: string) => {
-    setSavedFields(prev => {
+    setSavedFields((prev) => {
       const newSet = new Set(prev);
       newSet.add(fieldKey);
       return newSet;
@@ -175,7 +202,7 @@ export default function SectionProductionPage() {
     }
 
     setTimeout(() => {
-      setSavedFields(prev => {
+      setSavedFields((prev) => {
         const newSet = new Set(prev);
         newSet.delete(fieldKey);
         return newSet;
@@ -189,7 +216,7 @@ export default function SectionProductionPage() {
 
   // Show error feedback
   const showErrorFeedback = (fieldKey: string) => {
-    setFailedFields(prev => {
+    setFailedFields((prev) => {
       const newSet = new Set(prev);
       newSet.add(fieldKey);
       return newSet;
@@ -201,7 +228,7 @@ export default function SectionProductionPage() {
     }
 
     setTimeout(() => {
-      setFailedFields(prev => {
+      setFailedFields((prev) => {
         const newSet = new Set(prev);
         newSet.delete(fieldKey);
         return newSet;
@@ -241,6 +268,9 @@ export default function SectionProductionPage() {
       });
 
       setProducts(productsData);
+
+      const entry = await Firebase.getDocument("activities", "entries");
+      setEntries(entry.data() as Entry);
     } catch (error) {
       console.error("Error loading products:", error);
       setMessage({
@@ -253,6 +283,20 @@ export default function SectionProductionPage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const getChecked = (date: number): boolean | undefined => {
+    return entries?.data.find((d) => d.date === date)?.checked;
+  };
+
+  const handleCheck = (date: number, checked: boolean) => {
+    if (!entries) return;
+
+    const data = entries.data.map((d) =>
+      d.date === date ? { ...d, checked } : d
+    );
+
+    setEntries({ data });
   };
 
   // Update production data on blur
@@ -302,12 +346,14 @@ export default function SectionProductionPage() {
       const productDoc = await getDoc(productRef);
       if (productDoc.exists()) {
         const productData = productDoc.data();
-        const updatedData = productData.data.map((d: ProductionData, index: number) => {
-          if (index === date - 1) {
-            return { ...d, [field]: numValue };
+        const updatedData = productData.data.map(
+          (d: ProductionData, index: number) => {
+            if (index === date - 1) {
+              return { ...d, [field]: numValue };
+            }
+            return d;
           }
-          return d;
-        });
+        );
 
         await updateDoc(productRef, { data: updatedData });
 
@@ -477,7 +523,7 @@ export default function SectionProductionPage() {
   ) => {
     if (e.key === "Enter") {
       callback();
-      
+
       // Move focus to next input if specified
       if (nextFieldId) {
         const nextInput = inputRefs.current[nextFieldId];
@@ -616,9 +662,7 @@ export default function SectionProductionPage() {
             <h2 className="text-xl font-bold text-gray-800 mb-2">
               ডাটা লোড হচ্ছে
             </h2>
-            <p className="text-gray-600">
-              প্রোডাকশন ডাটা লোড করা হচ্ছে...
-            </p>
+            <p className="text-gray-600">প্রোডাকশন ডাটা লোড করা হচ্ছে...</p>
           </div>
           <div className="flex items-center justify-center gap-2 text-gray-500">
             <Loader2 className="h-5 w-5 animate-spin" />
@@ -648,13 +692,13 @@ export default function SectionProductionPage() {
                 </p>
               </div>
             </div>
-            
+
             {/* কমপ্যাক্ট ভিউ টগল বাটন */}
             <button
               onClick={() => setCompactView(!compactView)}
               className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-medium transition-all duration-200 ${
-                compactView 
-                  ? "bg-linear-to-r from-blue-600 to-blue-700 text-white" 
+                compactView
+                  ? "bg-linear-to-r from-blue-600 to-blue-700 text-white"
                   : "bg-gray-200 text-gray-800 hover:bg-gray-300"
               }`}
             >
@@ -681,9 +725,7 @@ export default function SectionProductionPage() {
                 <div className="flex items-center gap-3">
                   <CalendarDays className="h-5 w-5 text-blue-600" />
                   <div>
-                    <p className="text-sm text-gray-600">
-                      বর্তমান মাস
-                    </p>
+                    <p className="text-sm text-gray-600">বর্তমান মাস</p>
                     <p className="font-semibold text-blue-700">
                       {banglaMonthName} {year}
                     </p>
@@ -695,9 +737,7 @@ export default function SectionProductionPage() {
                 <div className="flex items-center gap-3">
                   <Package className="h-5 w-5 text-green-600" />
                   <div>
-                    <p className="text-sm text-gray-600">
-                      প্রোডাক্ট
-                    </p>
+                    <p className="text-sm text-gray-600">প্রোডাক্ট</p>
                     <p className="font-semibold text-green-700">
                       {products.length.toLocaleString("bn-BD")} টি
                     </p>
@@ -709,9 +749,7 @@ export default function SectionProductionPage() {
                 <div className="flex items-center gap-3">
                   <TrendingUp className="h-5 w-5 text-orange-600" />
                   <div>
-                    <p className="text-sm text-gray-600">
-                      মোট কার্টন
-                    </p>
+                    <p className="text-sm text-gray-600">মোট কার্টন</p>
                     <p className="font-semibold text-orange-700">
                       {sectionTotals.total_carton.toLocaleString("bn-BD")}
                     </p>
@@ -723,9 +761,7 @@ export default function SectionProductionPage() {
                 <div className="flex items-center gap-3">
                   <DollarSign className="h-5 w-5 text-purple-600" />
                   <div>
-                    <p className="text-sm text-gray-600">
-                      মোট মূল্য
-                    </p>
+                    <p className="text-sm text-gray-600">মোট মূল্য</p>
                     <p className="font-semibold text-purple-700">
                       ৳{sectionTotals.total_value.toLocaleString("bn-BD")}
                     </p>
@@ -768,9 +804,7 @@ export default function SectionProductionPage() {
                 ) : (
                   <Info className="h-5 w-5" />
                 )}
-                <span className="">
-                  {message.text}
-                </span>
+                <span className="">{message.text}</span>
               </div>
             </div>
           )}
@@ -831,7 +865,13 @@ export default function SectionProductionPage() {
                           {/* Product Name */}
                           <div className="flex items-start justify-between mb-3">
                             <div>
-                              <h4 className={`${compactView ? 'text-sm font-bold' : 'text-sm font-semibold'} text-gray-900`}>
+                              <h4
+                                className={`${
+                                  compactView
+                                    ? "text-sm font-bold"
+                                    : "text-sm font-semibold"
+                                } text-gray-900`}
+                              >
                                 {product.name}
                               </h4>
                               {!compactView && (
@@ -859,27 +899,43 @@ export default function SectionProductionPage() {
                                   </label>
                                   <input
                                     ref={(el) => {
-                                      inputRefs.current[`${product.id}-price`] = el;
+                                      inputRefs.current[`${product.id}-price`] =
+                                        el;
                                     }}
                                     type="number"
                                     value={product.price || 0}
                                     onChange={(e) =>
-                                      handleSummaryChange(product.id, "price", e.target.value)
+                                      handleSummaryChange(
+                                        product.id,
+                                        "price",
+                                        e.target.value
+                                      )
                                     }
                                     onBlur={(e) =>
-                                      updateSummaryData(product.id, "price", e.target.value)
+                                      updateSummaryData(
+                                        product.id,
+                                        "price",
+                                        e.target.value
+                                      )
                                     }
                                     onKeyPress={(e) =>
                                       handleKeyPress(
                                         e,
-                                        () => updateSummaryData(product.id, "price", e.currentTarget.value),
+                                        () =>
+                                          updateSummaryData(
+                                            product.id,
+                                            "price",
+                                            e.currentTarget.value
+                                          ),
                                         `${product.id}-opening`
                                       )
                                     }
                                     className={`w-full px-2 py-1.5 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all ${
                                       savedFields.has(`${product.id}-price`)
                                         ? "border-green-500 bg-green-50"
-                                        : failedFields.has(`${product.id}-price`)
+                                        : failedFields.has(
+                                            `${product.id}-price`
+                                          )
                                         ? "border-red-500 bg-red-50"
                                         : "border-gray-300"
                                     }`}
@@ -901,27 +957,44 @@ export default function SectionProductionPage() {
                                   </label>
                                   <input
                                     ref={(el) => {
-                                      inputRefs.current[`${product.id}-opening`] = el;
+                                      inputRefs.current[
+                                        `${product.id}-opening`
+                                      ] = el;
                                     }}
                                     type="number"
                                     value={product.opening || 0}
                                     onChange={(e) =>
-                                      handleSummaryChange(product.id, "opening", e.target.value)
+                                      handleSummaryChange(
+                                        product.id,
+                                        "opening",
+                                        e.target.value
+                                      )
                                     }
                                     onBlur={(e) =>
-                                      updateSummaryData(product.id, "opening", e.target.value)
+                                      updateSummaryData(
+                                        product.id,
+                                        "opening",
+                                        e.target.value
+                                      )
                                     }
                                     onKeyPress={(e) =>
                                       handleKeyPress(
                                         e,
-                                        () => updateSummaryData(product.id, "opening", e.currentTarget.value),
+                                        () =>
+                                          updateSummaryData(
+                                            product.id,
+                                            "opening",
+                                            e.currentTarget.value
+                                          ),
                                         `${product.id}-sales_target`
                                       )
                                     }
                                     className={`w-full px-2 py-1.5 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all ${
                                       savedFields.has(`${product.id}-opening`)
                                         ? "border-green-500 bg-green-50"
-                                        : failedFields.has(`${product.id}-opening`)
+                                        : failedFields.has(
+                                            `${product.id}-opening`
+                                          )
                                         ? "border-red-500 bg-red-50"
                                         : "border-gray-300"
                                     }`}
@@ -943,32 +1016,51 @@ export default function SectionProductionPage() {
                                   </label>
                                   <input
                                     ref={(el) => {
-                                      inputRefs.current[`${product.id}-sales_target`] = el;
+                                      inputRefs.current[
+                                        `${product.id}-sales_target`
+                                      ] = el;
                                     }}
                                     type="number"
                                     value={product.sales_target || 0}
                                     onChange={(e) =>
-                                      handleSummaryChange(product.id, "sales_target", e.target.value)
+                                      handleSummaryChange(
+                                        product.id,
+                                        "sales_target",
+                                        e.target.value
+                                      )
                                     }
                                     onBlur={(e) =>
-                                      updateSummaryData(product.id, "sales_target", e.target.value)
+                                      updateSummaryData(
+                                        product.id,
+                                        "sales_target",
+                                        e.target.value
+                                      )
                                     }
                                     onKeyPress={(e) =>
-                                      handleKeyPress(
-                                        e,
-                                        () => updateSummaryData(product.id, "sales_target", e.currentTarget.value)
+                                      handleKeyPress(e, () =>
+                                        updateSummaryData(
+                                          product.id,
+                                          "sales_target",
+                                          e.currentTarget.value
+                                        )
                                       )
                                     }
                                     className={`w-full px-2 py-1.5 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all ${
-                                      savedFields.has(`${product.id}-sales_target`)
+                                      savedFields.has(
+                                        `${product.id}-sales_target`
+                                      )
                                         ? "border-green-500 bg-green-50"
-                                        : failedFields.has(`${product.id}-sales_target`)
+                                        : failedFields.has(
+                                            `${product.id}-sales_target`
+                                          )
                                         ? "border-red-500 bg-red-50"
                                         : "border-gray-300"
                                     }`}
                                     min="0"
                                     placeholder="0"
-                                    disabled={saving[`${product.id}-sales_target`]}
+                                    disabled={
+                                      saving[`${product.id}-sales_target`]
+                                    }
                                   />
                                   {saving[`${product.id}-sales_target`] && (
                                     <div className="absolute top-1/2 right-2 -translate-y-1/2">
@@ -1078,7 +1170,9 @@ export default function SectionProductionPage() {
                                 মৌলিক উৎপাদন লক্ষ্য
                               </span>
                               <span className="font-semibold text-gray-900">
-                                {sectionTotals.floor_target.toLocaleString("bn-BD")}
+                                {sectionTotals.floor_target.toLocaleString(
+                                  "bn-BD"
+                                )}
                               </span>
                             </div>
                           </>
@@ -1108,7 +1202,10 @@ export default function SectionProductionPage() {
                                 মোট মূল্য
                               </span>
                               <span className="font-semibold text-blue-600">
-                                ৳{sectionTotals.total_value.toLocaleString("bn-BD")}
+                                ৳
+                                {sectionTotals.total_value.toLocaleString(
+                                  "bn-BD"
+                                )}
                               </span>
                             </div>
                           </>
@@ -1143,7 +1240,7 @@ export default function SectionProductionPage() {
                       {daysArray.map((day) => {
                         const isWeekendDay = isWeekend(day);
                         const isTodayDay = isToday(day);
-
+                        const checkValue = entries?.data.find(d => d.date === day)?.checked ?? false;
                         return (
                           <div
                             key={day}
@@ -1159,7 +1256,9 @@ export default function SectionProductionPage() {
                             <div className="h-full flex flex-col">
                               <div className="flex-1 flex flex-col items-center justify-center p-2">
                                 <div
-                                  className={`${compactView ? 'text-base' : 'text-lg'} font-bold ${
+                                  className={`${
+                                    compactView ? "text-base" : "text-lg"
+                                  } font-bold ${
                                     isTodayDay
                                       ? "text-green-700"
                                       : isWeekendDay
@@ -1167,7 +1266,7 @@ export default function SectionProductionPage() {
                                       : "text-blue-700"
                                   }`}
                                 >
-                                  {day}
+                                  <span>{day}</span>
                                 </div>
                                 {!compactView && (
                                   <div
@@ -1177,9 +1276,17 @@ export default function SectionProductionPage() {
                                         : "text-gray-600"
                                     }`}
                                   >
-                                    {getDayName(day)}
-                                    {isTodayDay && " (আজ)"}
-                                    {isWeekendDay && " (ছুটি)"}
+                                    <span>
+                                      {getDayName(day)} {isTodayDay && " (আজ)"}{" "}
+                                      {isWeekendDay && " (ছুটি)"}
+                                    </span>
+                                    <input
+                                      type="checkbox"
+                                      checked={checkValue}
+                                      onChange={(e) =>
+                                        handleCheck(day, e.target.checked)
+                                      }
+                                    />
                                   </div>
                                 )}
                               </div>
@@ -1254,7 +1361,9 @@ export default function SectionProductionPage() {
                                   >
                                     <input
                                       ref={(el) => {
-                                        inputRefs.current[`${product.id}-${day}-batch`] = el;
+                                        inputRefs.current[
+                                          `${product.id}-${day}-batch`
+                                        ] = el;
                                       }}
                                       type="number"
                                       value={prod.batch || 0}
@@ -1277,12 +1386,13 @@ export default function SectionProductionPage() {
                                       onKeyPress={(e) =>
                                         handleKeyPress(
                                           e,
-                                          () => updateProductionData(
-                                            product.id,
-                                            day,
-                                            "batch",
-                                            e.currentTarget.value
-                                          ),
+                                          () =>
+                                            updateProductionData(
+                                              product.id,
+                                              day,
+                                              "batch",
+                                              e.currentTarget.value
+                                            ),
                                           `${product.id}-${day}-carton`
                                         )
                                       }
@@ -1293,15 +1403,21 @@ export default function SectionProductionPage() {
                                           ? "placeholder-green-300"
                                           : "placeholder-gray-300"
                                       } ${
-                                        savedFields.has(`${product.id}-${day}-batch`)
+                                        savedFields.has(
+                                          `${product.id}-${day}-batch`
+                                        )
                                           ? "border-green-500 bg-green-50"
-                                          : failedFields.has(`${product.id}-${day}-batch`)
+                                          : failedFields.has(
+                                              `${product.id}-${day}-batch`
+                                            )
                                           ? "border-red-500 bg-red-50"
                                           : "border-none"
                                       }`}
                                       min="0"
                                       placeholder="0"
-                                      disabled={saving[`${product.id}-${day}-batch`]}
+                                      disabled={
+                                        saving[`${product.id}-${day}-batch`]
+                                      }
                                     />
                                     {saving[`${product.id}-${day}-batch`] && (
                                       <div className="absolute top-1/2 right-2 -translate-y-1/2">
@@ -1322,7 +1438,9 @@ export default function SectionProductionPage() {
                                   >
                                     <input
                                       ref={(el) => {
-                                        inputRefs.current[`${product.id}-${day}-carton`] = el;
+                                        inputRefs.current[
+                                          `${product.id}-${day}-carton`
+                                        ] = el;
                                       }}
                                       type="number"
                                       value={prod.carton || 0}
@@ -1353,7 +1471,10 @@ export default function SectionProductionPage() {
                                           // Focus to next day's batch input
                                           const nextDay = day + 1;
                                           if (nextDay <= lastDay) {
-                                            const nextInput = inputRefs.current[`${product.id}-${nextDay}-batch`];
+                                            const nextInput =
+                                              inputRefs.current[
+                                                `${product.id}-${nextDay}-batch`
+                                              ];
                                             if (nextInput) {
                                               nextInput.focus();
                                             }
@@ -1367,15 +1488,21 @@ export default function SectionProductionPage() {
                                           ? "placeholder-green-300"
                                           : "placeholder-gray-300"
                                       } ${
-                                        savedFields.has(`${product.id}-${day}-carton`)
+                                        savedFields.has(
+                                          `${product.id}-${day}-carton`
+                                        )
                                           ? "border-green-500 bg-green-50"
-                                          : failedFields.has(`${product.id}-${day}-carton`)
+                                          : failedFields.has(
+                                              `${product.id}-${day}-carton`
+                                            )
                                           ? "border-red-500 bg-red-50"
                                           : "border-none"
                                       }`}
                                       min="0"
                                       placeholder="0"
-                                      disabled={saving[`${product.id}-${day}-carton`]}
+                                      disabled={
+                                        saving[`${product.id}-${day}-carton`]
+                                      }
                                     />
                                     {saving[`${product.id}-${day}-carton`] && (
                                       <div className="absolute top-1/2 right-2 -translate-y-1/2">
@@ -1427,7 +1554,7 @@ export default function SectionProductionPage() {
                                 >
                                   <div
                                     className={`h-full flex items-center justify-center font-bold ${
-                                      compactView ? 'text-base' : 'text-lg'
+                                      compactView ? "text-base" : "text-lg"
                                     } ${
                                       isTodayDay
                                         ? "text-green-700"
@@ -1450,7 +1577,7 @@ export default function SectionProductionPage() {
                                 >
                                   <div
                                     className={`h-full flex items-center justify-center font-bold ${
-                                      compactView ? 'text-base' : 'text-lg'
+                                      compactView ? "text-base" : "text-lg"
                                     } ${
                                       isTodayDay
                                         ? "text-green-700"
@@ -1481,9 +1608,7 @@ export default function SectionProductionPage() {
             <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
               <div className="flex items-center gap-2 mb-2">
                 <Loader2 className="h-4 w-4 animate-spin text-blue-600" />
-                <span className="font-medium text-blue-800">
-                  লোডিং এনিমেশন
-                </span>
+                <span className="font-medium text-blue-800">লোডিং এনিমেশন</span>
               </div>
               <p className="text-sm text-blue-600">
                 সংরক্ষণ চলাকালীন স্পিনার দেখায়
@@ -1493,9 +1618,7 @@ export default function SectionProductionPage() {
             <div className="bg-green-50 p-4 rounded-lg border border-green-200">
               <div className="flex items-center gap-2 mb-2">
                 <div className="w-3 h-3 bg-green-500 rounded"></div>
-                <span className="font-medium text-green-800">
-                  সফল সংরক্ষণ
-                </span>
+                <span className="font-medium text-green-800">সফল সংরক্ষণ</span>
               </div>
               <p className="text-sm text-green-600">
                 সবুজ বর্ডার ও ব্যাকগ্রাউন্ড দেখায়
@@ -1505,9 +1628,7 @@ export default function SectionProductionPage() {
             <div className="bg-red-50 p-4 rounded-lg border border-red-200">
               <div className="flex items-center gap-2 mb-2">
                 <div className="w-3 h-3 bg-red-500 rounded"></div>
-                <span className="font-medium text-red-800">
-                  সংরক্ষণ ব্যর্থ
-                </span>
+                <span className="font-medium text-red-800">সংরক্ষণ ব্যর্থ</span>
               </div>
               <p className="text-sm text-red-600">
                 লাল বর্ডার ও ব্যাকগ্রাউন্ড দেখায়

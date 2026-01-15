@@ -49,7 +49,10 @@ export default function Reports() {
       @media print {
         @page {
           size: A4;
-          margin: 0.2in;
+          margin-top: 0.5in;
+          margin-bottom: 0.2in;
+          margin-right: 0.2in;
+          margin-left: 0.5in;
         }
         body {
           -webkit-print-color-adjust: exact !important;
@@ -332,6 +335,14 @@ export default function Reports() {
             }}
           />
         </div>
+        <button onClick={async()=>{
+          await Firebase.createDocWithName('activities','entries',{
+            data : Array.from({ length: 31 }, (_, i) => ({
+            date: i + 1,
+            checked : false
+          })),
+          })
+        }}>Create Activity</button>
 
         {/* প্রিন্ট হেডার (শুধু প্রিন্টের সময় দেখা যাবে) */}
         <div className="hidden print:block mb-4">
@@ -594,10 +605,9 @@ export default function Reports() {
           h2,
           h3 {
             page-break-after: avoid;
-            font-size: 16px !important;
+            font-size: 18px !important;
           }
           table {
-            page-break-inside: avoid;
             font-size: 10px !important;
             table-layout: fixed !important;
           }
@@ -613,7 +623,7 @@ export default function Reports() {
             font-weight: 600 !important;
           }
           .section-column {
-            width: 6% !important;
+            width: 7% !important;
             max-width: 50px !important;
           }
           .mp-column {
