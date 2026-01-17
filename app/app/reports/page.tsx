@@ -49,7 +49,10 @@ export default function Reports() {
       @media print {
         @page {
           size: A4;
-          margin: 0.2in;
+          margin-top: 0.5in;
+          margin-bottom: 0.2in;
+          margin-right: 0.2in;
+          margin-left: 0.5in;
         }
         body {
           -webkit-print-color-adjust: exact !important;
@@ -95,7 +98,7 @@ export default function Reports() {
           min-width: 40px !important;
         }
         .mo-order-column {
-          width: 8% !important;
+          width: 6% !important;
           min-width: 40px !important;
         }
         .total-batch-column {
@@ -107,9 +110,9 @@ export default function Reports() {
           min-width: 40px !important;
         }
         .mp-column {
-          width: 6% !important;
-          min-width: 35px !important;
-          max-width: 40px !important;
+          width: 4% !important;
+          min-width: 30px !important;
+          max-width: 35px !important;
         }
         .product-info {
           font-size: 8px !important;
