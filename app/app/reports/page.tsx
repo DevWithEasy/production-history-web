@@ -419,22 +419,22 @@ export default function Reports() {
                           </div>
                         </td>
                         <td className="border border-gray-300 p-1 text-center print:py-0 print:px-1 batch-column">
-                          <span className="font-medium">{product.batch}</span>
+                          <span className="font-medium">{product.batch > 0 ? product.batch : "-"}</span>
                         </td>
                         <td className="border border-gray-300 p-1 text-center print:py-0 print:px-1 carton-column">
-                          <span className="font-medium">{product.carton}</span>
+                          <span className="font-medium">{product.carton > 0 ? product.carton : "-"}</span>
                         </td>
                         <td className="border border-gray-300 p-1 text-center print:py-0 print:px-1 mo-order-column">
                           {/* খালি কলাম - প্রিন্ট করার পর হাতে লিখবেন */}
                         </td>
                         <td className="border border-gray-300 p-1 text-center print:py-0 print:px-1 total-batch-column">
                           <span className="font-medium">
-                            {product.totalBatch}
+                            {product.totalBatch > 0 ? product.totalBatch : '-'}
                           </span>
                         </td>
                         <td className="border border-gray-300 p-1 text-center print:py-0 print:px-1 total-carton-column">
                           <span className="font-medium">
-                            {product.totalCarton}
+                            {product.totalCarton > 0 ? product.totalCarton : '-'}
                           </span>
                         </td>
                         {index === 0 ? (
@@ -443,7 +443,7 @@ export default function Reports() {
                             rowSpan={data[section].length}
                           >
                             <span className="print:text-xs">
-                              {getSectionManpower(section)}
+                              {getSectionManpower(section) > 0 ? getSectionManpower(section) : '-'}
                             </span>
                           </td>
                         ) : null}
