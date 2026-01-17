@@ -49,15 +49,12 @@ export default function Reports() {
       @media print {
         @page {
           size: A4;
-          margin-top: 0.5in;
-          margin-bottom: 0.2in;
-          margin-right: 0.2in;
-          margin-left: 0.5in;
+          margin: 0.2in;
         }
         body {
           -webkit-print-color-adjust: exact !important;
           print-color-adjust: exact !important;
-          font-size: 10px !important;
+          font-size: 9px !important;
         }
         .no-print {
           display: none !important;
@@ -65,14 +62,14 @@ export default function Reports() {
         .print-table {
           width: 100% !important;
           border-collapse: collapse !important;
-          font-size: 10px !important;
+          font-size: 9px !important;
           table-layout: fixed !important;
         }
         .print-table th, .print-table td {
           border: 1px solid #000 !important;
-          padding: 2px 4px !important;
+          padding: 2px 3px !important;
           text-align: center !important;
-          font-size: 10px !important;
+          font-size: 9px !important;
           word-wrap: break-word !important;
         }
         .print-table th {
@@ -81,46 +78,51 @@ export default function Reports() {
         }
         .section-column {
           width: 6% !important;
-          min-width: 40px !important;
-          max-width: 50px !important;
+          min-width: 35px !important;
+          max-width: 40px !important;
         }
         .product-column {
-          width: 38% !important;
-          min-width: 120px !important;
+          width: 30% !important;
+          min-width: 100px !important;
           text-align: left !important;
         }
         .batch-column {
-          width: 10% !important;
-          min-width: 50px !important;
-        }
-        .carton-column {
-          width: 10% !important;
-          min-width: 50px !important;
-        }
-        .total-batch-column {
-          width: 10% !important;
-          min-width: 50px !important;
-        }
-        .total-carton-column {
-          width: 10% !important;
-          min-width: 50px !important;
-        }
-        .mp-column {
           width: 8% !important;
           min-width: 40px !important;
-          max-width: 45px !important;
+        }
+        .carton-column {
+          width: 8% !important;
+          min-width: 40px !important;
+        }
+        .mo-order-column {
+          width: 8% !important;
+          min-width: 40px !important;
+        }
+        .total-batch-column {
+          width: 8% !important;
+          min-width: 40px !important;
+        }
+        .total-carton-column {
+          width: 8% !important;
+          min-width: 40px !important;
+        }
+        .mp-column {
+          width: 6% !important;
+          min-width: 35px !important;
+          max-width: 40px !important;
         }
         .product-info {
-          font-size: 9px !important;
+          font-size: 8px !important;
           line-height: 1.2 !important;
         }
         .product-name {
           font-weight: bold !important;
           margin-bottom: 1px !important;
+          font-size: 9px !important;
         }
         .product-sku {
           color: #666 !important;
-          font-size: 8px !important;
+          font-size: 7px !important;
         }
       }
     `,
@@ -335,14 +337,6 @@ export default function Reports() {
             }}
           />
         </div>
-        <button onClick={async()=>{
-          await Firebase.createDocWithName('activities','entries',{
-            data : Array.from({ length: 31 }, (_, i) => ({
-            date: i + 1,
-            checked : false
-          })),
-          })
-        }}>Create Activity</button>
 
         {/* প্রিন্ট হেডার (শুধু প্রিন্টের সময় দেখা যাবে) */}
         <div className="hidden print:block mb-4">
@@ -375,6 +369,9 @@ export default function Reports() {
                 <th className="border border-gray-300 p-1 font-semibold print:py-0 print:px-1 carton-column">
                   Daily Carton
                 </th>
+                <th className="border border-gray-300 p-1 font-semibold print:py-0 print:px-1 mo-order-column">
+                  MO Order
+                </th>
                 <th className="border border-gray-300 p-1 font-semibold print:py-0 print:px-1 total-batch-column">
                   Total Batch
                 </th>
@@ -405,10 +402,10 @@ export default function Reports() {
                             rowSpan={data[section].length}
                           >
                             <div className="section-content">
-                              <p className="font-semibold text-xs print:text-[10px] leading-tight">
+                              <p className="font-semibold text-xs print:text-[9px] leading-tight">
                                 {getDisplaySectionName(section)}
                               </p>
-                              <p className="text-xs print:text-[9px]">
+                              <p className="text-xs print:text-[8px]">
                                 (৳{getSectionCartonValue(section).toFixed(0)})
                               </p>
                             </div>
@@ -426,6 +423,9 @@ export default function Reports() {
                         </td>
                         <td className="border border-gray-300 p-1 text-center print:py-0 print:px-1 carton-column">
                           <span className="font-medium">{product.carton}</span>
+                        </td>
+                        <td className="border border-gray-300 p-1 text-center print:py-0 print:px-1 mo-order-column">
+                          {/* খালি কলাম - প্রিন্ট করার পর হাতে লিখবেন */}
                         </td>
                         <td className="border border-gray-300 p-1 text-center print:py-0 print:px-1 total-batch-column">
                           <span className="font-medium">
@@ -454,7 +454,7 @@ export default function Reports() {
               ) : (
                 <tr>
                   <td
-                    colSpan={7}
+                    colSpan={8}
                     className="border border-gray-300 p-4 text-center text-gray-500"
                   >
                     No production data available for selected date
@@ -488,6 +488,9 @@ export default function Reports() {
                         0
                       )}
                     </span>
+                  </td>
+                  <td className="border border-gray-300 p-1 text-center print:py-0 print:px-1 mo-order-column">
+                    {/* MO Order এর টোটাল কলামও খালি রাখা হয়েছে */}
                   </td>
                   <td className="border border-gray-300 p-1 text-center print:py-0 print:px-1 total-batch-column">
                     <span className="print:text-xs">
@@ -537,6 +540,9 @@ export default function Reports() {
                         )
                         .toFixed(0)}
                     </span>
+                  </td>
+                  <td className="border border-gray-300 p-1 text-center print:py-0 print:px-1 mo-order-column">
+                    <span className="print:text-xs">-</span>
                   </td>
                   <td className="border border-gray-300 p-1 text-center print:py-0 print:px-1 total-batch-column">
                     <span className="print:text-xs">-</span>
@@ -599,16 +605,16 @@ export default function Reports() {
             margin: 0 !important;
           }
           body {
-            font-size: 10px !important;
+            font-size: 9px !important;
           }
           h1,
           h2,
           h3 {
             page-break-after: avoid;
-            font-size: 18px !important;
+            font-size: 16px !important;
           }
           table {
-            font-size: 10px !important;
+            font-size: 9px !important;
             table-layout: fixed !important;
           }
           tr {
@@ -616,19 +622,19 @@ export default function Reports() {
             page-break-after: auto;
           }
           .product-info {
-            min-width: 120px;
+            min-width: 100px;
           }
           .product-name {
-            font-size: 10px !important;
+            font-size: 9px !important;
             font-weight: 600 !important;
           }
           .section-column {
-            width: 7% !important;
-            max-width: 50px !important;
+            width: 6% !important;
+            max-width: 40px !important;
           }
           .mp-column {
-            width: 7% !important;
-            max-width: 45px !important;
+            width: 6% !important;
+            max-width: 40px !important;
           }
         }
       `}</style>

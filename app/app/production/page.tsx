@@ -573,7 +573,6 @@ export default function Dashboard() {
             <div className="w-20 h-20 mx-auto rounded-full bg-linear-to-br from-blue-500 to-blue-600 animate-pulse flex items-center justify-center">
               <BarChart3 className="h-10 w-10 text-white" />
             </div>
-            <div className="absolute inset-0 rounded-full border-4 border-transparent border-t-white animate-spin"></div>
           </div>
           <div>
             <h2 className="text-xl font-bold text-gray-800 mb-2">

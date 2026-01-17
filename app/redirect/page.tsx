@@ -1,17 +1,17 @@
 "use client";
 
-import { useState, useEffect, useRef, KeyboardEvent } from "react";
-import { useRouter } from "next/navigation";
 import Firebase from "@/utils/firebase";
 import {
-  Lock,
+  CheckCircle,
+  Fingerprint,
   Key,
   Loader2,
-  CheckCircle,
-  Shield,
+  Lock,
   LogIn,
-  Fingerprint,
+  Shield,
 } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { KeyboardEvent, useEffect, useRef, useState } from "react";
 
 interface PinDocument {
   id: string;
@@ -117,13 +117,12 @@ export default function RedirectPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-gray-50 flex items-center justify-center p-4 font-[family-name:var(--font-tiro-bangla)]">
+      <div className="min-h-screen bg-linear-to-br from-blue-50 to-gray-50 flex items-center justify-center p-4 font-(family-name:--font-tiro-bangla)">
         <div className="text-center space-y-6">
           <div className="relative">
-            <div className="w-20 h-20 mx-auto rounded-full bg-gradient-to-r from-blue-500 to-blue-600 animate-pulse flex items-center justify-center">
+            <div className="w-20 h-20 mx-auto rounded-full bg-linear-to-r from-blue-500 to-blue-600 animate-pulse flex items-center justify-center">
               <Shield className="h-10 w-10 text-white" />
             </div>
-            <div className="absolute inset-0 rounded-full border-4 border-transparent border-t-white animate-spin"></div>
           </div>
           <div>
             <h2 className="text-xl font-bold text-gray-800 mb-2">
@@ -142,7 +141,7 @@ export default function RedirectPage() {
 
   if (success) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-green-50 to-emerald-50 flex items-center justify-center p-4 font-[family-name:var(--font-tiro-bangla)]">
+      <div className="min-h-screen bg-linear-to-br from-green-50 to-emerald-50 flex items-center justify-center p-4 font-(family-name:--font-tiro-bangla)">
         <div className="text-center space-y-6 max-w-md">
           <div className="relative">
             <div className="w-20 h-20 mx-auto rounded-full bg-gradient-to-r from-green-500 to-emerald-600 flex items-center justify-center">
@@ -175,7 +174,7 @@ export default function RedirectPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-gray-50 p-4 md:p-6 font-[family-name:var(--font-tiro-bangla)]">
+    <div className="min-h-screen bg-linear-to-br from-blue-50 to-gray-50 p-4 md:p-6 font-(family-name:--font-tiro-bangla)">
       <div className="max-w-md mx-auto">
         {/* Header Section */}
         <div className="mb-8">
