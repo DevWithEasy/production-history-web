@@ -85,7 +85,7 @@ export default function Reports() {
           max-width: 40px !important;
         }
         .product-column {
-          width: 30% !important;
+          width: 31% !important;
           min-width: 100px !important;
           text-align: left !important;
         }
@@ -109,10 +109,12 @@ export default function Reports() {
           width: 8% !important;
           min-width: 40px !important;
         }
+        /* MP কলামের উইথ কমিয়ে দিয়েছি */
         .mp-column {
-          width: 4% !important;
-          min-width: 30px !important;
-          max-width: 35px !important;
+          width: 3% !important;
+          min-width: 20px !important;
+          max-width: 25px !important;
+          padding: 1px 2px !important;
         }
         .product-info {
           font-size: 8px !important;
@@ -635,9 +637,13 @@ export default function Reports() {
             width: 6% !important;
             max-width: 40px !important;
           }
+          /* MP কলামের উইথ আরও কমিয়ে */
           .mp-column {
-            width: 6% !important;
-            max-width: 40px !important;
+            width: 3% !important;
+            min-width: 20px !important;
+            max-width: 25px !important;
+            font-size: 8px !important;
+            padding: 1px 2px !important;
           }
         }
       `}</style>
