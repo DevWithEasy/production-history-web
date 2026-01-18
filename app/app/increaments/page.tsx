@@ -127,7 +127,7 @@ export default function Increments() {
 
     try {
       // আপনার Firebase utils-এ deleteDocument ফাংশন ইমপ্লিমেন্ট করতে হবে
-      // await Firebase.deleteDocument("increaments", id);
+      await Firebase.deleteDocument("increaments", id);
       alert("আবেদন ডিলিট করা হয়েছে");
       fetchData(); // Refresh list
     } catch (error) {

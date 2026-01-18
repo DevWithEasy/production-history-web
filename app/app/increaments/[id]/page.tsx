@@ -345,7 +345,7 @@ export default function Increment() {
   const updatePersonField = (
     index: number,
     field: keyof Person,
-    value: string
+    value: string,
   ) => {
     if (!increament) return;
     const updatedPersons = [...(increament.person || [])];
@@ -356,12 +356,13 @@ export default function Increment() {
   const deleteDocument = async () => {
     if (
       !confirm(
-        "আপনি কি এই আবেদনটি মুছতে চান? এই কাজটি পূর্বাবস্থায় ফেরানো যাবে না।"
+        "আপনি কি এই আবেদনটি মুছতে চান? এই কাজটি পূর্বাবস্থায় ফেরানো যাবে না।",
       )
     )
       return;
     try {
       alert("আবেদন সফলভাবে মুছে ফেলা হয়েছে!");
+      await Firebase.deleteDocument("increaments", increamentId);
       router.push("/app/increaments");
     } catch (error) {
       console.error("Error deleting document:", error);
@@ -539,7 +540,7 @@ export default function Increment() {
                     onClick={() =>
                       updateField(
                         "header",
-                        `বরাবর\nব্যাস্থাপনা পরিচালক\nএস এন্ড বি নাইস ফুড ভ্যালি লিঃ\n১১৬৩, জেরকাছাড়, মোহাম্মদ আলী বাজার, ফেনী সদর, ফেনী।\n\nবিষয়ঃ- বেতন বৃদ্ধির জন্য আবেদন।\n\nজনাব,\n\nআপনার সদয় আবগতির জন্য জানাচ্ছি যে, নিন্ম লিখিত শ্রমিকদের কর্মদক্ষতার ভিত্তিতে বেতন বৃদ্ধির সুপারিশ করছি।\n\n`
+                        `বরাবর\nব্যাস্থাপনা পরিচালক\nএস এন্ড বি নাইস ফুড ভ্যালি লিঃ\n১১৬৩, জেরকাছাড়, মোহাম্মদ আলী বাজার, ফেনী সদর, ফেনী।\n\nবিষয়ঃ- বেতন বৃদ্ধির জন্য আবেদন।\n\nজনাব,\n\nআপনার সদয় আবগতির জন্য জানাচ্ছি যে, নিন্ম লিখিত শ্রমিকদের কর্মদক্ষতার ভিত্তিতে বেতন বৃদ্ধির সুপারিশ করছি।\n\n`,
                       )
                     }
                     className="text-sm text-blue-600 hover:text-blue-800"
@@ -756,12 +757,25 @@ export default function Increment() {
                                   updatePersonField(
                                     i,
                                     "section",
-                                    e.target.value
+                                    e.target.value,
                                   )
                                 }
                                 className="px-2 py-1.5 border border-gray-300 rounded w-full focus:ring-1 focus:ring-blue-500 focus:border-blue-500 outline-none"
                               >
-                                {["বিস্কুট", "ওয়েফার", "কেক"].map((s) => (
+                                {[
+                                  "বিস্কুট",
+                                  "ওয়েফার",
+                                  "কেক",
+                                  "বেকারি-০১",
+                                  "চানাচুর",
+                                  "পানি এবং বেভা.",
+                                  "ডেইরি মিল্ক",
+                                  "নুডুলস",
+                                  "ভারমিসলি",
+                                  "স্টোর",
+                                  "ডিস্ট্রিবিউশিন",
+                                  "এডমিন",
+                                ].map((s) => (
                                   <option key={s} value={s}>
                                     {s}
                                   </option>
@@ -786,7 +800,7 @@ export default function Increment() {
                                   updatePersonField(
                                     i,
                                     "join_date",
-                                    e.target.value
+                                    e.target.value,
                                   )
                                 }
                                 className="px-2 py-1.5 border border-gray-300 rounded w-full focus:ring-1 focus:ring-blue-500 focus:border-blue-500 outline-none"
@@ -800,7 +814,7 @@ export default function Increment() {
                                   updatePersonField(
                                     i,
                                     "pre_salary",
-                                    e.target.value
+                                    e.target.value,
                                   )
                                 }
                                 className="px-2 py-1.5 border border-gray-300 rounded w-full focus:ring-1 focus:ring-blue-500 focus:border-blue-500 outline-none"
@@ -814,7 +828,7 @@ export default function Increment() {
                                   updatePersonField(
                                     i,
                                     "pro_salary",
-                                    e.target.value
+                                    e.target.value,
                                   )
                                 }
                                 className="px-2 py-1.5 border border-gray-300 rounded w-full focus:ring-1 focus:ring-blue-500 focus:border-blue-500 outline-none"
@@ -853,7 +867,7 @@ export default function Increment() {
                     onClick={() =>
                       updateField(
                         "footer",
-                        `উপরে উল্লেখিত শ্রমিকদের বেতন বৃদ্ধি করার অনুমতি দিয়ে শ্রমিকদের কাজে উৎসাহিত করার জন্য আপনার সদয় আনুমতি প্রার্থনা করছি।\n\nনিবেদক\n\n\nমোহাম্মদ হাবিবুর রহমান\nব্যাবস্থাপক কারখানা`
+                        `উপরে উল্লেখিত শ্রমিকদের বেতন বৃদ্ধি করার অনুমতি দিয়ে শ্রমিকদের কাজে উৎসাহিত করার জন্য আপনার সদয় আনুমতি প্রার্থনা করছি।\n\nনিবেদক\n\n\nমোহাম্মদ হাবিবুর রহমান\nব্যাবস্থাপক কারখানা`,
                       )
                     }
                     className="text-sm text-purple-600 hover:text-purple-800"
@@ -973,16 +987,16 @@ export default function Increment() {
                           {formatCurrencyBangla(
                             increament.person.reduce(
                               (sum, p) => sum + parseInt(p.pre_salary || "0"),
-                              0
-                            )
+                              0,
+                            ),
                           )}
                         </td>
                         <td className="px-4 py-3 text-sm text-center font-bold border border-gray-300 salary-column">
                           {formatCurrencyBangla(
                             increament.person.reduce(
                               (sum, p) => sum + parseInt(p.pro_salary || "0"),
-                              0
-                            )
+                              0,
+                            ),
                           )}
                         </td>
                       </tr>
