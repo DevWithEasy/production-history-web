@@ -106,14 +106,14 @@ export default function Reports() {
           min-width: 40px !important;
         }
         .total-carton-column {
-          width: 8% !important;
-          min-width: 40px !important;
+          width: 9% !important;
+          min-width: 45px !important;
         }
-        /* MP কলামের উইথ কমিয়ে দিয়েছি */
+        /* MP কলামের উইথ বাড়িয়েছি ৪ টা লেটার জায়গা পাওয়ার জন্য */
         .mp-column {
-          width: 3% !important;
-          min-width: 20px !important;
-          max-width: 25px !important;
+          width: 6% !important;
+          min-width: 35px !important;
+          max-width: 45px !important;
           padding: 1px 2px !important;
         }
         .product-info {
@@ -128,6 +128,14 @@ export default function Reports() {
         .product-sku {
           color: #666 !important;
           font-size: 7px !important;
+        }
+        /* টোটাল এবং টোটাল ভ্যালু সারির ফন্ট সাইজ কমিয়েছি */
+        .total-row td,
+        .total-row span,
+        .total-value-row td,
+        .total-value-row span {
+          font-size: 8px !important;
+          padding: 1px 2px !important;
         }
       }
     `,
@@ -447,7 +455,7 @@ export default function Reports() {
                             className="border border-gray-300 p-1 text-center font-semibold align-middle print:py-0 print:px-1 mp-column"
                             rowSpan={data[section].length}
                           >
-                            <span className="print:text-xs">
+                            <span className="print:text-xs whitespace-nowrap">
                               {getSectionManpower(section) > 0 ? getSectionManpower(section) : '-'}
                             </span>
                           </td>
@@ -469,7 +477,7 @@ export default function Reports() {
             </tbody>
             {sections.length > 0 && (
               <tfoot>
-                <tr className="bg-gray-200 font-bold">
+                <tr className="bg-gray-200 font-bold total-row">
                   <td
                     colSpan={2}
                     className="border border-gray-300 p-1 text-right print:py-0 print:px-1"
@@ -518,13 +526,13 @@ export default function Reports() {
                     </span>
                   </td>
                   <td className="border border-gray-300 p-1 text-center print:py-0 print:px-1 mp-column">
-                    <span className="print:text-xs">
+                    <span className="print:text-xs whitespace-nowrap">
                       {getTotalManpower()}
                     </span>
                   </td>
                 </tr>
                 {/* মোট ভ্যালু সারি যোগ করুন */}
-                <tr className="bg-blue-100 font-bold">
+                <tr className="bg-blue-100 font-bold total-value-row">
                   <td
                     colSpan={2}
                     className="border border-gray-300 p-1 text-right print:py-0 print:px-1"
@@ -637,11 +645,23 @@ export default function Reports() {
             width: 6% !important;
             max-width: 40px !important;
           }
-          /* MP কলামের উইথ আরও কমিয়ে */
+          /* MP কলামের উইথ বাড়িয়ে দিয়েছি */
           .mp-column {
-            width: 3% !important;
-            min-width: 20px !important;
-            max-width: 25px !important;
+            width: 6% !important;
+            min-width: 35px !important;
+            max-width: 45px !important;
+            font-size: 8px !important;
+            padding: 1px 2px !important;
+          }
+          /* টোটাল সারির ফন্ট সাইজ কমিয়েছি */
+          .total-row td,
+          .total-row span {
+            font-size: 8px !important;
+            padding: 1px 2px !important;
+          }
+          /* টোটাল ভ্যালু সারির ফন্ট সাইজ কমিয়েছি */
+          .total-value-row td,
+          .total-value-row span {
             font-size: 8px !important;
             padding: 1px 2px !important;
           }
