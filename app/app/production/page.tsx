@@ -2,6 +2,7 @@
 
 import { Product } from "@/types/Product.Types";
 import Firebase from "@/utils/firebase";
+import { getPeriod } from "@/utils/storage";
 import {
   Activity,
   AlertCircle,
@@ -55,36 +56,19 @@ type ManPower = {
 };
 
 export default function Dashboard() {
+  const { year, month } = getPeriod();
   const [products, setProducts] = useState<ProductWithId[]>([]);
   const [prevMonthProducts, setPrevMonthProducts] = useState<ProductWithId[]>(
-    []
+    [],
   );
   const [manpower, setManpower] = useState<ManPower | null>(null);
   const [prevMonthManpower, setPrevMonthManpower] = useState<ManPower | null>(
-    null
+    null,
   );
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
 
-  const currentDate = new Date();
-  const currentMonth = currentDate.getMonth();
-  const currentYear = currentDate.getFullYear();
-
-  const monthBnNames = [
-    "জানুয়ারি",
-    "ফেব্রুয়ারি",
-    "মার্চ",
-    "এপ্রিল",
-    "মে",
-    "জুন",
-    "জুলাই",
-    "আগস্ট",
-    "সেপ্টেম্বর",
-    "অক্টোবর",
-    "নভেম্বর",
-    "ডিসেম্বর",
-  ];
   const monthNames = [
     "January",
     "February",
@@ -107,8 +91,9 @@ export default function Dashboard() {
     return { month: month - 1, year };
   }, []);
 
-  const prevMonthInfo = getPreviousMonth(currentMonth, currentYear);
-  const currentMonthName = monthNames[currentMonth];
+  // ব্যবহারকারীর সিলেক্ট করা মাস এবং বছর
+  const selectedMonthName = monthNames[month - 1];
+  const prevMonthInfo = getPreviousMonth(month - 1, year);
   const prevMonthName = monthNames[prevMonthInfo.month];
 
   const calculatePercentageChange = useCallback(
@@ -118,7 +103,7 @@ export default function Dashboard() {
       }
       return ((current - previous) / previous) * 100;
     },
-    []
+    [],
   );
 
   const getChangeIndicator = (percentage: number) => {
@@ -169,9 +154,10 @@ export default function Dashboard() {
         setLoading(true);
         setError(null);
 
+        // সিলেক্ট করা পিরিয়ডের ডাটা লোড করুন
         const currentProductsData = await Firebase.getProductsByPeriod<Product>(
-          currentYear,
-          currentMonthName
+          year,
+          selectedMonthName,
         );
 
         const currentProductsWithId: ProductWithId[] = currentProductsData.map(
@@ -179,14 +165,15 @@ export default function Dashboard() {
             ...product,
             id: product.id || product.code || `product-${Math.random()}`,
             section: product.section?.toLowerCase() || "uncategorized",
-          })
+          }),
         );
 
         setProducts(currentProductsWithId);
 
+        // পূর্ববর্তী মাসের ডাটা লোড করুন
         const prevProductsData = await Firebase.getProductsByPeriod<Product>(
           prevMonthInfo.year,
-          prevMonthName
+          prevMonthName,
         );
 
         const prevProductsWithId: ProductWithId[] = prevProductsData.map(
@@ -194,7 +181,7 @@ export default function Dashboard() {
             ...product,
             id: product.id || product.code || `product-${Math.random()}-prev`,
             section: product.section?.toLowerCase() || "uncategorized",
-          })
+          }),
         );
 
         setPrevMonthProducts(prevProductsWithId);
@@ -202,8 +189,8 @@ export default function Dashboard() {
         try {
           const currentManpowerData =
             await Firebase.getManpowerByPeriod<ManPower>(
-              currentYear,
-              currentMonthName
+              year,
+              selectedMonthName,
             );
           setManpower(currentManpowerData);
         } catch (manpowerError) {
@@ -214,13 +201,13 @@ export default function Dashboard() {
         try {
           const prevManpowerData = await Firebase.getManpowerByPeriod<ManPower>(
             prevMonthInfo.year,
-            prevMonthName
+            prevMonthName,
           );
           setPrevMonthManpower(prevManpowerData);
         } catch (prevManpowerError) {
           console.warn(
             "Previous manpower data not available:",
-            prevManpowerError
+            prevManpowerError,
           );
           setPrevMonthManpower(null);
         }
@@ -229,7 +216,7 @@ export default function Dashboard() {
         setError(
           `ডাটা লোড করতে সমস্যা: ${
             err instanceof Error ? err.message : "অজানা সমস্যা"
-          }`
+          }`,
         );
         setProducts([]);
         setPrevMonthProducts([]);
@@ -241,13 +228,7 @@ export default function Dashboard() {
     };
 
     loadData();
-  }, [
-    currentMonthName,
-    currentYear,
-    prevMonthName,
-    prevMonthInfo.year,
-    refreshKey,
-  ]);
+  }, [selectedMonthName, year, prevMonthName, prevMonthInfo.year, refreshKey]);
 
   const extractAllSections = useCallback((productsData: ProductWithId[]) => {
     const sections = new Set<string>();
@@ -326,7 +307,7 @@ export default function Dashboard() {
 
       return { sectionManpower, total_manpower: totalManpower };
     },
-    []
+    [],
   );
 
   const currentMonthStats = useMemo(() => {
@@ -395,12 +376,12 @@ export default function Dashboard() {
     sectionArray.sort((a, b) => b.totalValue - a.totalValue);
 
     const dailyTrendData: DailyTrendData[] = Object.values(dailyData).sort(
-      (a, b) => a.date - b.date
+      (a, b) => a.date - b.date,
     );
 
     const { sectionManpower, total_manpower } = calculateSectionManpower(
       manpower,
-      allSections
+      allSections,
     );
 
     const valuePerManpower =
@@ -475,7 +456,7 @@ export default function Dashboard() {
 
     const { sectionManpower, total_manpower } = calculateSectionManpower(
       prevMonthManpower,
-      allSections
+      allSections,
     );
 
     const valuePerManpower =
@@ -501,8 +482,8 @@ export default function Dashboard() {
 
   const monthlyComparison = useMemo(() => {
     const current = {
-      month: currentMonthName,
-      year: currentYear,
+      month: selectedMonthName,
+      year: year,
       totalValue: currentMonthStats.stats.totalValue,
       totalBatch: currentMonthStats.stats.totalBatch,
       totalCarton: currentMonthStats.stats.totalCarton,
@@ -530,8 +511,8 @@ export default function Dashboard() {
   }, [
     currentMonthStats,
     previousMonthStats,
-    currentMonthName,
-    currentYear,
+    selectedMonthName,
+    year,
     prevMonthName,
     prevMonthInfo.year,
     allSections,
@@ -542,7 +523,7 @@ export default function Dashboard() {
       const normalizedSection = sectionName.toLowerCase();
       return manpowerData[normalizedSection] || 0;
     },
-    []
+    [],
   );
 
   const formatCurrency = (amount: number) => {
@@ -623,7 +604,7 @@ export default function Dashboard() {
             কোনো প্রোডাকশন ডাটা নেই
           </h3>
           <p className="text-gray-600 mb-4">
-            {currentMonthName} {currentYear} এর জন্য কোনো প্রোডাকশন ডাটা পাওয়া
+            {selectedMonthName} {year} এর জন্য কোনো প্রোডাকশন ডাটা পাওয়া
             যায়নি।
           </p>
           <button
@@ -652,7 +633,7 @@ export default function Dashboard() {
                 প্রোডাকশন ড্যাশবোর্ড
               </h1>
               <p className="text-gray-600">
-                {currentMonthName} {currentYear} - প্রোডাকশন বিশ্লেষণ ও তুলনা
+                {selectedMonthName} {year} - প্রোডাকশন বিশ্লেষণ ও তুলনা
               </p>
             </div>
           </div>
@@ -666,9 +647,9 @@ export default function Dashboard() {
                 <div className="flex items-center gap-3">
                   <CalendarDays className="h-5 w-5 text-blue-600" />
                   <div>
-                    <p className="text-sm text-gray-600">বর্তমান মাস</p>
+                    <p className="text-sm text-gray-600">সিলেক্ট করা মাস</p>
                     <p className="font-semibold text-blue-700">
-                      {currentMonthName} {currentYear}
+                      {selectedMonthName} {year}
                     </p>
                   </div>
                 </div>
@@ -723,7 +704,7 @@ export default function Dashboard() {
               <div>
                 <h3 className="text-lg font-bold text-gray-800">মাসিক তুলনা</h3>
                 <p className="text-gray-600 text-sm">
-                  {currentMonthName} {currentYear} বনাম {prevMonthName}{" "}
+                  {selectedMonthName} {year} বনাম {prevMonthName}{" "}
                   {prevMonthInfo.year}
                 </p>
               </div>
@@ -744,7 +725,7 @@ export default function Dashboard() {
                   : ""}
                 {calculatePercentageChange(
                   monthlyComparison.current.totalValue,
-                  monthlyComparison.previous.totalValue
+                  monthlyComparison.previous.totalValue,
                 ).toFixed(1)}
                 %
               </div>
@@ -777,7 +758,7 @@ export default function Dashboard() {
                 {(() => {
                   const percentageChange = calculatePercentageChange(
                     monthlyComparison.current.totalValue,
-                    monthlyComparison.previous.totalValue
+                    monthlyComparison.previous.totalValue,
                   );
                   const indicator = getChangeIndicator(percentageChange);
                   const IndicatorIcon = indicator.icon;
@@ -823,7 +804,7 @@ export default function Dashboard() {
                 {(() => {
                   const percentageChange = calculatePercentageChange(
                     monthlyComparison.current.totalManpower,
-                    monthlyComparison.previous.totalManpower
+                    monthlyComparison.previous.totalManpower,
                   );
                   const indicator = getChangeIndicator(percentageChange);
                   const IndicatorIcon = indicator.icon;
@@ -869,7 +850,7 @@ export default function Dashboard() {
                 {(() => {
                   const percentageChange = calculatePercentageChange(
                     monthlyComparison.current.totalCarton,
-                    monthlyComparison.previous.totalCarton
+                    monthlyComparison.previous.totalCarton,
                   );
                   const indicator = getChangeIndicator(percentageChange);
                   const IndicatorIcon = indicator.icon;
@@ -906,20 +887,20 @@ export default function Dashboard() {
                 <div>
                   <p className="text-xl font-bold text-gray-900">
                     {formatCurrency(
-                      monthlyComparison.current.productivity.valuePerManpower
+                      monthlyComparison.current.productivity.valuePerManpower,
                     )}
                   </p>
                   <p className="text-xs text-gray-500 mt-1">
                     পূর্ববর্তী:{" "}
                     {formatCurrency(
-                      monthlyComparison.previous.productivity.valuePerManpower
+                      monthlyComparison.previous.productivity.valuePerManpower,
                     )}
                   </p>
                 </div>
                 {(() => {
                   const percentageChange = calculatePercentageChange(
                     monthlyComparison.current.productivity.valuePerManpower,
-                    monthlyComparison.previous.productivity.valuePerManpower
+                    monthlyComparison.previous.productivity.valuePerManpower,
                   );
                   const indicator = getChangeIndicator(percentageChange);
                   const IndicatorIcon = indicator.icon;
@@ -949,7 +930,7 @@ export default function Dashboard() {
             <div className="flex items-center justify-between mb-4">
               <div>
                 <h4 className="text-lg font-bold text-gray-800">
-                  বর্তমান মাসের উৎপাদন
+                  সিলেক্ট করা মাসের উৎপাদন
                 </h4>
                 <p className="text-gray-600 text-sm">
                   {formatNumber(monthlyComparison.current.totalCarton)} কার্টন
@@ -979,7 +960,7 @@ export default function Dashboard() {
             <div className="flex items-center justify-between mb-4">
               <div>
                 <h4 className="text-lg font-bold text-gray-800">
-                  বর্তমান মাসের ম্যানপাওয়ার
+                  সিলেক্ট করা মাসের ম্যানপাওয়ার
                 </h4>
                 <p className="text-gray-600 text-sm">
                   {
@@ -1024,7 +1005,7 @@ export default function Dashboard() {
             <div className="mt-4">
               <div className="text-2xl font-bold text-gray-900">
                 {formatCurrency(
-                  monthlyComparison.current.productivity.valuePerManpower
+                  monthlyComparison.current.productivity.valuePerManpower,
                 )}
               </div>
               <div className="mt-3 pt-3 border-t border-gray-100">
@@ -1032,7 +1013,7 @@ export default function Dashboard() {
                   <span className="text-gray-600">পূর্ববর্তী মাস</span>
                   <span className="font-medium text-gray-800">
                     {formatCurrency(
-                      monthlyComparison.previous.productivity.valuePerManpower
+                      monthlyComparison.previous.productivity.valuePerManpower,
                     )}
                   </span>
                 </div>
@@ -1068,8 +1049,8 @@ export default function Dashboard() {
                       currentMonthStats.sectionData.filter(
                         (s) =>
                           !previousMonthStats.sectionData.find(
-                            (ps) => ps.name === s.name
-                          )
+                            (ps) => ps.name === s.name,
+                          ),
                       ).length
                     }{" "}
                     টি
@@ -1102,10 +1083,10 @@ export default function Dashboard() {
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
             {allSections.map((section) => {
               const currentSectionData = currentMonthStats.sectionData.find(
-                (s) => s.name === section
+                (s) => s.name === section,
               );
               const prevSectionData = previousMonthStats.sectionData.find(
-                (s) => s.name === section
+                (s) => s.name === section,
               );
 
               const isNewSection = currentSectionData && !prevSectionData;
@@ -1120,8 +1101,8 @@ export default function Dashboard() {
                     isNewSection
                       ? "border-green-200 bg-green-50"
                       : isInactiveThisMonth
-                      ? "border-gray-200 bg-gray-50"
-                      : "border-blue-100 bg-blue-50 hover:bg-blue-100"
+                        ? "border-gray-200 bg-gray-50"
+                        : "border-blue-100 bg-blue-50 hover:bg-blue-100"
                   }`}
                 >
                   <div className="flex items-center justify-between mb-3">
@@ -1165,8 +1146,8 @@ export default function Dashboard() {
                             {formatNumber(
                               getSectionManpower(
                                 section,
-                                monthlyComparison.current.sectionManpower
-                              )
+                                monthlyComparison.current.sectionManpower,
+                              ),
                             )}
                           </span>
                         </div>
@@ -1212,31 +1193,31 @@ export default function Dashboard() {
                   {currentMonthStats.topSections.map((section, idx) => {
                     const percentage = getPercentage(
                       section.totalValue,
-                      monthlyComparison.current.totalValue
+                      monthlyComparison.current.totalValue,
                     );
                     const prevMonthSection =
                       monthlyComparison.previous.sectionData.find(
-                        (s) => s.name === section.name
+                        (s) => s.name === section.name,
                       );
                     const prevValue = prevMonthSection?.totalValue || 0;
                     const changePercentage = calculatePercentageChange(
                       section.totalValue,
-                      prevValue
+                      prevValue,
                     );
                     const indicator = getChangeIndicator(changePercentage);
                     const IndicatorIcon = indicator.icon;
 
                     const sectionManpower = getSectionManpower(
                       section.name,
-                      monthlyComparison.current.sectionManpower
+                      monthlyComparison.current.sectionManpower,
                     );
                     const prevSectionManpower = getSectionManpower(
                       section.name,
-                      monthlyComparison.previous.sectionManpower
+                      monthlyComparison.previous.sectionManpower,
                     );
                     const manpowerChange = calculatePercentageChange(
                       sectionManpower,
-                      prevSectionManpower
+                      prevSectionManpower,
                     );
 
                     return (
@@ -1248,8 +1229,8 @@ export default function Dashboard() {
                                 idx === 0
                                   ? "bg-linear-to-br from-yellow-100 to-yellow-200 text-yellow-600"
                                   : idx === 1
-                                  ? "bg-linear-to-br from-gray-100 to-gray-200 text-gray-600"
-                                  : "bg-linear-to-br from-orange-100 to-orange-200 text-orange-600"
+                                    ? "bg-linear-to-br from-gray-100 to-gray-200 text-gray-600"
+                                    : "bg-linear-to-br from-orange-100 to-orange-200 text-orange-600"
                               }`}
                             >
                               <span className="font-bold text-xl">
@@ -1330,8 +1311,8 @@ export default function Dashboard() {
                         currentMonthStats.sectionData.filter(
                           (s) =>
                             !previousMonthStats.sectionData.find(
-                              (ps) => ps.name === s.name
-                            )
+                              (ps) => ps.name === s.name,
+                            ),
                         ).length
                       }
                     </span>
@@ -1341,8 +1322,8 @@ export default function Dashboard() {
                       .filter(
                         (s) =>
                           !previousMonthStats.sectionData.find(
-                            (ps) => ps.name === s.name
-                          )
+                            (ps) => ps.name === s.name,
+                          ),
                       )
                       .map((section) => (
                         <div
@@ -1371,8 +1352,8 @@ export default function Dashboard() {
                         previousMonthStats.sectionData.filter(
                           (s) =>
                             !currentMonthStats.sectionData.find(
-                              (cs) => cs.name === s.name
-                            )
+                              (cs) => cs.name === s.name,
+                            ),
                         ).length
                       }
                     </span>
@@ -1382,8 +1363,8 @@ export default function Dashboard() {
                       .filter(
                         (s) =>
                           !currentMonthStats.sectionData.find(
-                            (cs) => cs.name === s.name
-                          )
+                            (cs) => cs.name === s.name,
+                          ),
                       )
                       .map((section) => (
                         <div
@@ -1428,13 +1409,13 @@ export default function Dashboard() {
                         <p className="text-sm text-yellow-700 mt-1">
                           <span className="font-bold">
                             {formatSectionName(
-                              currentMonthStats.topSections[0]?.name
+                              currentMonthStats.topSections[0]?.name,
                             )}
                           </span>{" "}
                           মোট উৎপাদনের{" "}
                           {getPercentage(
                             currentMonthStats.topSections[0].totalValue,
-                            monthlyComparison.current.totalValue
+                            monthlyComparison.current.totalValue,
                           ).toFixed(1)}
                           % অংশ তৈরি করেছে
                         </p>
@@ -1444,7 +1425,7 @@ export default function Dashboard() {
 
                 {monthlyComparison.current.totalValue > 0 && (
                   <div className="flex items-start gap-3 p-4 bg-blue-50 rounded-xl border border-blue-200">
-                    <TrendingUp className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" />
+                    <TrendingUp className="w-5 h-5 text-blue-600 mt-0.5 shrink-0" />
                     <div>
                       <p className="font-semibold text-blue-800">
                         সামগ্রিক বৃদ্ধি
@@ -1458,8 +1439,8 @@ export default function Dashboard() {
                         {Math.abs(
                           calculatePercentageChange(
                             monthlyComparison.current.totalValue,
-                            monthlyComparison.previous.totalValue
-                          )
+                            monthlyComparison.previous.totalValue,
+                          ),
                         ).toFixed(1)}
                         %
                       </p>
@@ -1471,12 +1452,12 @@ export default function Dashboard() {
                   0 &&
                   (() => {
                     const sections = Object.entries(
-                      monthlyComparison.current.sectionManpower
+                      monthlyComparison.current.sectionManpower,
                     ).filter(([key]) => key !== "total_manpower");
                     if (sections.length === 0) return null;
 
                     const highestManpower = sections.reduce((max, curr) =>
-                      curr[1] > max[1] ? curr : max
+                      curr[1] > max[1] ? curr : max,
                     );
 
                     return (
@@ -1524,8 +1505,8 @@ export default function Dashboard() {
                 {formatCurrency(
                   Math.abs(
                     monthlyComparison.current.totalValue -
-                      monthlyComparison.previous.totalValue
-                  )
+                      monthlyComparison.previous.totalValue,
+                  ),
                 )}
               </p>
             </div>
@@ -1545,7 +1526,7 @@ export default function Dashboard() {
                   : "-"}
                 {Math.abs(
                   monthlyComparison.current.totalManpower -
-                    monthlyComparison.previous.totalManpower
+                    monthlyComparison.previous.totalManpower,
                 )}
               </p>
             </div>
@@ -1574,9 +1555,9 @@ export default function Dashboard() {
                   monthlyComparison.previous.totalValue
                     ? "📈 উৎপাদন বাড়ছে"
                     : monthlyComparison.current.totalValue <
-                      monthlyComparison.previous.totalValue
-                    ? "📉 উৎপাদন কমছে"
-                    : "📊 উৎপাদন স্থিতিশীল"}
+                        monthlyComparison.previous.totalValue
+                      ? "📉 উৎপাদন কমছে"
+                      : "📊 উৎপাদন স্থিতিশীল"}
                 </p>
               </div>
               <div className="flex items-center gap-4">

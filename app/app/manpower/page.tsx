@@ -3,8 +3,22 @@
 import { ManPower } from "@/types/Manpower.Types";
 import Firebase from "@/utils/firebase";
 import { getPeriod } from "@/utils/storage";
+import {
+  Activity,
+  ArrowDownRight,
+  ArrowUpRight,
+  BarChart3,
+  Calendar,
+  Loader2,
+  PieChart,
+  Target,
+  TrendingDown,
+  TrendingUp,
+  UserCheck,
+  Users,
+  Zap,
+} from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
-import { Users, TrendingUp, TrendingDown, Calendar, BarChart3, PieChart, Target, ArrowUpRight, ArrowDownRight, Minus, Loader2, Activity, Zap, UserCheck } from "lucide-react";
 
 interface SectionData {
   id: string;
@@ -20,8 +34,18 @@ export default function Manpower() {
   const { year, month } = getPeriod();
 
   const monthBnNames = [
-    "জানুয়ারি", "ফেব্রুয়ারি", "মার্চ", "এপ্রিল", "মে", "জুন",
-    "জুলাই", "আগস্ট", "সেপ্টেম্বর", "অক্টোবর", "নভেম্বর", "ডিসেম্বর"
+    "জানুয়ারি",
+    "ফেব্রুয়ারি",
+    "মার্চ",
+    "এপ্রিল",
+    "মে",
+    "জুন",
+    "জুলাই",
+    "আগস্ট",
+    "সেপ্টেম্বর",
+    "অক্টোবর",
+    "নভেম্বর",
+    "ডিসেম্বর",
   ];
   const monthNames = [
     "January",
@@ -42,22 +66,21 @@ export default function Manpower() {
   const monthName = monthNames[month - 1];
 
   // Get previous month + year
-  const getPreviousMonth = useCallback(
-    (monthIndex: number, year: number) => {
-      if (monthIndex === 0) {
-        return { month: 11, year: year - 1 };
-      }
-      return { month: monthIndex - 1, year };
-    },
-    []
-  );
+  const getPreviousMonth = useCallback((monthIndex: number, year: number) => {
+    if (monthIndex === 0) {
+      return { month: 11, year: year - 1 };
+    }
+    return { month: monthIndex - 1, year };
+  }, []);
 
   // Previous month info
   const prevMonthInfo = getPreviousMonth(month - 1, year);
   const prevMonthName = monthNames[prevMonthInfo.month];
 
   const [manpower, setManpower] = useState<ManPower | null>(null);
-  const [prevMonthManpower, setPrevMonthManpower] = useState<ManPower | null>(null);
+  const [prevMonthManpower, setPrevMonthManpower] = useState<ManPower | null>(
+    null,
+  );
   const [loading, setLoading] = useState(true);
   const [sections, setSections] = useState<SectionData[]>([]);
   const [overview, setOverview] = useState({
@@ -67,7 +90,7 @@ export default function Manpower() {
     totalChangePercent: 0,
     averagePerDay: 0,
     highestSection: { name: "", value: 0 },
-    lowestSection: { name: "", value: 0 }
+    lowestSection: { name: "", value: 0 },
   });
 
   const sectionConfigs = [
@@ -85,16 +108,16 @@ export default function Manpower() {
 
   useEffect(() => {
     setLoading(true);
-    
+
     // Load current month manpower
     Firebase.getManpowerByPeriod<ManPower>(year, monthName)
       .then((data) => {
         setManpower(data);
-        
+
         // Load previous month manpower
         return Firebase.getManpowerByPeriod<ManPower>(
           prevMonthInfo.year,
-          prevMonthName
+          prevMonthName,
         );
       })
       .then(setPrevMonthManpower)
@@ -121,26 +144,31 @@ export default function Manpower() {
 
       sectionConfigs.forEach((config) => {
         // Calculate current month total for this section
-        const currentTotal = manpower.data?.reduce((sum, day) => {
-          return sum + (day[config.id as keyof typeof day] as number || 0);
-        }, 0) || 0;
+        const currentTotal =
+          manpower.data?.reduce((sum, day) => {
+            return sum + ((day[config.id as keyof typeof day] as number) || 0);
+          }, 0) || 0;
 
         // Calculate previous month total for this section
-        const previousTotal = prevMonthManpower?.data?.reduce((sum, day) => {
-          return sum + (day[config.id as keyof typeof day] as number || 0);
-        }, 0) || 0;
+        const previousTotal =
+          prevMonthManpower?.data?.reduce((sum, day) => {
+            return sum + ((day[config.id as keyof typeof day] as number) || 0);
+          }, 0) || 0;
 
         const change = currentTotal - previousTotal;
-        const changePercent = previousTotal > 0 
-          ? (change / previousTotal) * 100 
-          : (currentTotal > 0 ? 100 : 0);
+        const changePercent =
+          previousTotal > 0
+            ? (change / previousTotal) * 100
+            : currentTotal > 0
+              ? 100
+              : 0;
 
         sectionData.push({
           ...config,
           current: currentTotal,
           previous: previousTotal,
           change,
-          changePercent
+          changePercent,
         });
 
         totalCurrent += currentTotal;
@@ -159,12 +187,15 @@ export default function Manpower() {
 
       // Calculate overall metrics
       const totalChange = totalCurrent - totalPrevious;
-      const totalChangePercent = totalPrevious > 0 
-        ? (totalChange / totalPrevious) * 100 
-        : (totalCurrent > 0 ? 100 : 0);
-      
-      const averagePerDay = manpower.data?.length 
-        ? totalCurrent / manpower.data.length 
+      const totalChangePercent =
+        totalPrevious > 0
+          ? (totalChange / totalPrevious) * 100
+          : totalCurrent > 0
+            ? 100
+            : 0;
+
+      const averagePerDay = manpower.data?.length
+        ? totalCurrent / manpower.data.length
         : 0;
 
       setSections(sectionData);
@@ -174,8 +205,10 @@ export default function Manpower() {
         totalChange,
         totalChangePercent,
         averagePerDay,
-        highestSection: highestSection.value > 0 ? highestSection : { name: "N/A", value: 0 },
-        lowestSection: lowestValue < Infinity ? lowestSection : { name: "N/A", value: 0 }
+        highestSection:
+          highestSection.value > 0 ? highestSection : { name: "N/A", value: 0 },
+        lowestSection:
+          lowestValue < Infinity ? lowestSection : { name: "N/A", value: 0 },
       });
     };
 
@@ -185,22 +218,22 @@ export default function Manpower() {
   // Calculate daily totals for chart
   const getDailyTotals = () => {
     if (!manpower?.data) return [];
-    
+
     return manpower.data.map((day) => {
       const total = sectionConfigs.reduce((sum, config) => {
-        return sum + (day[config.id as keyof typeof day] as number || 0);
+        return sum + ((day[config.id as keyof typeof day] as number) || 0);
       }, 0);
-      
+
       return {
         date: day.date,
-        total: total
+        total: total,
       };
     });
   };
 
   // Get section percentage of total
   const getSectionPercentage = (sectionValue: number) => {
-    return overview.totalCurrent > 0 
+    return overview.totalCurrent > 0
       ? ((sectionValue / overview.totalCurrent) * 100).toFixed(1)
       : "0";
   };
@@ -215,7 +248,9 @@ export default function Manpower() {
             </div>
           </div>
           <div>
-            <h2 className="text-xl font-bold text-gray-800 mb-2">ডাটা লোড হচ্ছে</h2>
+            <h2 className="text-xl font-bold text-gray-800 mb-2">
+              ডাটা লোড হচ্ছে
+            </h2>
             <p className="text-gray-600 font-[family-name:var(--font-tiro-bangla)]">
               ম্যানপাওয়ার ড্যাশবোর্ড প্রস্তুত করা হচ্ছে...
             </p>
@@ -239,7 +274,9 @@ export default function Manpower() {
               <Users className="h-8 w-8 text-white" />
             </div>
             <div>
-              <h1 className="text-3xl font-bold text-gray-800">ম্যানপাওয়ার ড্যাশবোর্ড</h1>
+              <h1 className="text-3xl font-bold text-gray-800">
+                ম্যানপাওয়ার ড্যাশবোর্ড
+              </h1>
               <p className="text-gray-600 font-[family-name:var(--font-tiro-bangla)]">
                 {monthName} {year} - সেকশনওয়াইজ বিশ্লেষণ
               </p>
@@ -255,11 +292,13 @@ export default function Manpower() {
               <div className="bg-blue-100 p-3 rounded-lg">
                 <Users className="h-6 w-6 text-blue-600" />
               </div>
-              <div className={`px-3 py-1 rounded-full text-sm font-medium ${
-                overview.totalChange >= 0 
-                  ? "bg-green-100 text-green-800" 
-                  : "bg-red-100 text-red-800"
-              }`}>
+              <div
+                className={`px-3 py-1 rounded-full text-sm font-medium ${
+                  overview.totalChange >= 0
+                    ? "bg-green-100 text-green-800"
+                    : "bg-red-100 text-red-800"
+                }`}
+              >
                 {overview.totalChange >= 0 ? (
                   <span className="flex items-center gap-1">
                     <ArrowUpRight className="h-3 w-3" />
@@ -274,8 +313,12 @@ export default function Manpower() {
               </div>
             </div>
             <div>
-              <h3 className="text-sm font-medium text-gray-500 mb-1">মোট ম্যানপাওয়ার</h3>
-              <div className="text-2xl font-bold text-gray-800 mb-2">{overview.totalCurrent.toLocaleString()} জন</div>
+              <h3 className="text-sm font-medium text-gray-500 mb-1">
+                মোট ম্যানপাওয়ার
+              </h3>
+              <div className="text-2xl font-bold text-gray-800 mb-2">
+                {overview.totalCurrent.toLocaleString()} জন
+              </div>
               <div className="text-sm text-gray-600">
                 পূর্ববর্তী মাস: {overview.totalPrevious.toLocaleString()} জন
               </div>
@@ -290,7 +333,9 @@ export default function Manpower() {
               </div>
             </div>
             <div>
-              <h3 className="text-sm font-medium text-gray-500 mb-1">দৈনিক গড়</h3>
+              <h3 className="text-sm font-medium text-gray-500 mb-1">
+                দৈনিক গড়
+              </h3>
               <div className="text-2xl font-bold text-gray-800 mb-2">
                 {overview.averagePerDay.toFixed(0)} জন
               </div>
@@ -308,7 +353,9 @@ export default function Manpower() {
               </div>
             </div>
             <div>
-              <h3 className="text-sm font-medium text-gray-500 mb-1">সর্বোচ্চ সেকশন</h3>
+              <h3 className="text-sm font-medium text-gray-500 mb-1">
+                সর্বোচ্চ সেকশন
+              </h3>
               <div className="text-2xl font-bold text-gray-800 mb-2">
                 {overview.highestSection.name}
               </div>
@@ -326,7 +373,9 @@ export default function Manpower() {
               </div>
             </div>
             <div>
-              <h3 className="text-sm font-medium text-gray-500 mb-1">সর্বনিম্ন সেকশন</h3>
+              <h3 className="text-sm font-medium text-gray-500 mb-1">
+                সর্বনিম্ন সেকশন
+              </h3>
               <div className="text-2xl font-bold text-gray-800 mb-2">
                 {overview.lowestSection.name}
               </div>
@@ -353,10 +402,13 @@ export default function Manpower() {
             </div>
             <div className="text-right">
               <div className="text-sm text-gray-500">পরিবর্তন</div>
-              <div className={`text-lg font-bold ${
-                overview.totalChange >= 0 ? 'text-green-600' : 'text-red-600'
-              }`}>
-                {overview.totalChange >= 0 ? '+' : ''}{overview.totalChange.toLocaleString()} জন
+              <div
+                className={`text-lg font-bold ${
+                  overview.totalChange >= 0 ? "text-green-600" : "text-red-600"
+                }`}
+              >
+                {overview.totalChange >= 0 ? "+" : ""}
+                {overview.totalChange.toLocaleString()} জন
               </div>
             </div>
           </div>
@@ -370,7 +422,9 @@ export default function Manpower() {
               <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center gap-2">
                   <PieChart className="h-5 w-5 text-blue-600" />
-                  <h3 className="text-lg font-bold text-gray-800">সেকশনওয়াইজ বিশ্লেষণ</h3>
+                  <h3 className="text-lg font-bold text-gray-800">
+                    সেকশনওয়াইজ বিশ্লেষণ
+                  </h3>
                 </div>
                 <div className="text-sm text-gray-500">
                   {sections.length} টি সেকশন
@@ -379,23 +433,33 @@ export default function Manpower() {
 
               <div className="space-y-4">
                 {sections.map((section) => (
-                  <div key={section.id} className="border border-gray-200 rounded-xl p-4 hover:border-blue-300 transition-colors">
+                  <div
+                    key={section.id}
+                    className="border border-gray-200 rounded-xl p-4 hover:border-blue-300 transition-colors"
+                  >
                     <div className="flex items-center justify-between mb-3">
                       <div className="flex items-center gap-3">
-                        <div className={`w-3 h-3 rounded-full ${section.color}`}></div>
+                        <div
+                          className={`w-3 h-3 rounded-full ${section.color}`}
+                        ></div>
                         <div>
-                          <h4 className="font-medium text-gray-800">{section.name}</h4>
+                          <h4 className="font-medium text-gray-800">
+                            {section.name}
+                          </h4>
                           <div className="text-xs text-gray-500">
                             মোটের {getSectionPercentage(section.current)}%
                           </div>
                         </div>
                       </div>
-                      <div className={`px-3 py-1 rounded-full text-sm font-medium ${
-                        section.change >= 0 
-                          ? "bg-green-100 text-green-800" 
-                          : "bg-red-100 text-red-800"
-                      }`}>
-                        {section.change >= 0 ? '+' : ''}{section.change.toLocaleString()} জন
+                      <div
+                        className={`px-3 py-1 rounded-full text-sm font-medium ${
+                          section.change >= 0
+                            ? "bg-green-100 text-green-800"
+                            : "bg-red-100 text-red-800"
+                        }`}
+                      >
+                        {section.change >= 0 ? "+" : ""}
+                        {section.change.toLocaleString()} জন
                       </div>
                     </div>
 
@@ -423,20 +487,22 @@ export default function Manpower() {
                       {/* Progress Bar */}
                       <div className="pt-2">
                         <div className="relative h-2 bg-gray-200 rounded-full overflow-hidden">
-                          <div 
+                          <div
                             className={`absolute top-0 left-0 h-full rounded-full ${
-                              section.change >= 0 ? 'bg-green-500' : 'bg-red-500'
+                              section.change >= 0
+                                ? "bg-green-500"
+                                : "bg-red-500"
                             }`}
-                            style={{ 
-                              width: `${Math.min(Math.abs(section.changePercent), 100)}%` 
+                            style={{
+                              width: `${Math.min(Math.abs(section.changePercent), 100)}%`,
                             }}
                           ></div>
                         </div>
                         <div className="flex justify-between text-xs text-gray-500 pt-1">
                           <span>পূর্ববর্তী মাস</span>
                           <span>
-                            {section.change >= 0 ? 'বৃদ্ধি' : 'হ্রাস'} 
-                            : {Math.abs(section.changePercent).toFixed(1)}%
+                            {section.change >= 0 ? "বৃদ্ধি" : "হ্রাস"}:{" "}
+                            {Math.abs(section.changePercent).toFixed(1)}%
                           </span>
                         </div>
                       </div>
@@ -453,21 +519,30 @@ export default function Manpower() {
             <div className="bg-white rounded-2xl shadow-lg p-6 border border-gray-200">
               <div className="flex items-center gap-2 mb-6">
                 <Target className="h-5 w-5 text-purple-600" />
-                <h3 className="text-lg font-bold text-gray-800">বন্টন বিশ্লেষণ</h3>
+                <h3 className="text-lg font-bold text-gray-800">
+                  বন্টন বিশ্লেষণ
+                </h3>
               </div>
 
               <div className="space-y-4">
                 {sections.map((section) => {
                   const percentage = getSectionPercentage(section.current);
                   return (
-                    <div key={section.id} className="flex items-center justify-between">
+                    <div
+                      key={section.id}
+                      className="flex items-center justify-between"
+                    >
                       <div className="flex items-center gap-3">
-                        <div className={`w-3 h-3 rounded-full ${section.color}`}></div>
-                        <span className="text-sm text-gray-700">{section.name}</span>
+                        <div
+                          className={`w-3 h-3 rounded-full ${section.color}`}
+                        ></div>
+                        <span className="text-sm text-gray-700">
+                          {section.name}
+                        </span>
                       </div>
                       <div className="flex items-center gap-3">
                         <div className="w-24 bg-gray-200 rounded-full h-2">
-                          <div 
+                          <div
                             className={`h-full rounded-full ${section.color}`}
                             style={{ width: `${percentage}%` }}
                           ></div>
@@ -486,22 +561,31 @@ export default function Manpower() {
             <div className="bg-white rounded-2xl shadow-lg p-6 border border-gray-200">
               <div className="flex items-center gap-2 mb-6">
                 <Activity className="h-5 w-5 text-green-600" />
-                <h3 className="text-lg font-bold text-gray-800">সেরা পারফর্মার</h3>
+                <h3 className="text-lg font-bold text-gray-800">
+                  সেরা পারফর্মার
+                </h3>
               </div>
 
               <div className="space-y-4">
                 {sections
-                  .filter(s => s.change > 0)
+                  .filter((s) => s.change > 0)
                   .sort((a, b) => b.changePercent - a.changePercent)
                   .slice(0, 3)
                   .map((section, index) => (
-                    <div key={section.id} className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
+                    <div
+                      key={section.id}
+                      className="flex items-center justify-between p-3 bg-green-50 rounded-lg"
+                    >
                       <div className="flex items-center gap-3">
                         <div className="w-8 h-8 rounded-lg bg-green-100 flex items-center justify-center">
-                          <span className="text-green-700 font-bold">{index + 1}</span>
+                          <span className="text-green-700 font-bold">
+                            {index + 1}
+                          </span>
                         </div>
                         <div>
-                          <div className="font-medium text-gray-800">{section.name}</div>
+                          <div className="font-medium text-gray-800">
+                            {section.name}
+                          </div>
                           <div className="text-xs text-gray-600">
                             {section.changePercent.toFixed(1)}% বৃদ্ধি
                           </div>
@@ -512,17 +596,24 @@ export default function Manpower() {
                       </div>
                     </div>
                   ))}
-                
-                {sections.filter(s => s.change <= 0).length > 0 && (
+
+                {sections.filter((s) => s.change <= 0).length > 0 && (
                   <div className="pt-4 border-t border-gray-200">
-                    <div className="text-sm text-gray-600 mb-3">উন্নয়ন প্রয়োজন</div>
+                    <div className="text-sm text-gray-600 mb-3">
+                      উন্নয়ন প্রয়োজন
+                    </div>
                     {sections
-                      .filter(s => s.change < 0)
+                      .filter((s) => s.change < 0)
                       .sort((a, b) => a.changePercent - b.changePercent)
                       .slice(0, 2)
                       .map((section) => (
-                        <div key={section.id} className="flex items-center justify-between p-3 bg-red-50 rounded-lg mb-2">
-                          <div className="font-medium text-gray-800">{section.name}</div>
+                        <div
+                          key={section.id}
+                          className="flex items-center justify-between p-3 bg-red-50 rounded-lg mb-2"
+                        >
+                          <div className="font-medium text-gray-800">
+                            {section.name}
+                          </div>
                           <div className="text-red-700 font-bold">
                             {section.change} জন
                           </div>
@@ -539,34 +630,50 @@ export default function Manpower() {
                 <Zap className="h-5 w-5 text-blue-600" />
                 <h3 className="font-bold text-gray-800">দ্রুত পরিসংখ্যান</h3>
               </div>
-              
+
               <div className="space-y-3">
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-gray-600">মোট সেকশন</span>
-                  <span className="font-medium text-gray-800">{sections.length}</span>
+                  <span className="font-medium text-gray-800">
+                    {sections.length}
+                  </span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-gray-600">বৃদ্ধির হার</span>
-                  <span className={`font-medium ${
-                    overview.totalChangePercent >= 0 ? 'text-green-600' : 'text-red-600'
-                  }`}>
-                    {overview.totalChangePercent >= 0 ? '+' : ''}{overview.totalChangePercent.toFixed(1)}%
+                  <span
+                    className={`font-medium ${
+                      overview.totalChangePercent >= 0
+                        ? "text-green-600"
+                        : "text-red-600"
+                    }`}
+                  >
+                    {overview.totalChangePercent >= 0 ? "+" : ""}
+                    {overview.totalChangePercent.toFixed(1)}%
                   </span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-gray-600">গড় বৃদ্ধি</span>
                   <span className="font-medium text-gray-800">
-                    {sections.length > 0 
-                      ? (sections.reduce((sum, s) => sum + s.changePercent, 0) / sections.length).toFixed(1)
-                      : 0}%
+                    {sections.length > 0
+                      ? (
+                          sections.reduce(
+                            (sum, s) => sum + s.changePercent,
+                            0,
+                          ) / sections.length
+                        ).toFixed(1)
+                      : 0}
+                    %
                   </span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-gray-600">সর্বোচ্চ বৃদ্ধি</span>
                   <span className="font-medium text-green-600">
-                    {sections.length > 0 
-                      ? Math.max(...sections.map(s => s.changePercent)).toFixed(1)
-                      : 0}%
+                    {sections.length > 0
+                      ? Math.max(
+                          ...sections.map((s) => s.changePercent),
+                        ).toFixed(1)
+                      : 0}
+                    %
                   </span>
                 </div>
               </div>
@@ -579,7 +686,7 @@ export default function Manpower() {
           <div className="inline-flex items-center gap-2 text-gray-600 text-sm">
             <UserCheck className="h-4 w-4" />
             <span className="font-[family-name:var(--font-tiro-bangla)]">
-              সর্বশেষ আপডেট: {new Date().toLocaleDateString('bn-BD')}
+              সর্বশেষ আপডেট: {new Date().toLocaleDateString("bn-BD")}
             </span>
           </div>
         </div>

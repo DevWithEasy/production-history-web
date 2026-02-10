@@ -261,7 +261,7 @@ export default function HomePage() {
                 </li>
                 <li className="flex items-center gap-2 text-gray-700">
                   <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
-                  <span>ডেভেলপার: আইটি ডিপার্টমেন্ট</span>
+                  <span>ডেভেলপার: Code Orbit Studio</span>
                 </li>
               </ul>
             </div>
