@@ -143,24 +143,29 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       ],
     },
     {
-      name: "প্রোডাক্ট ম্যানেজমেন্ট",
+      name: "ম্যানেজমেন্ট",
       icon: Package,
-      href: "/app/products", // এখানে লিঙ্ক যোগ করেছি
+      href: "/app/managements",
       hasSubmenu: true,
       subItems: [
         {
           name: "সমস্ত প্রোডাক্ট",
-          href: "/app/products",
+          href: "/app/managements/products",
           icon: Package,
         },
         {
           name: "প্রোডাক্ট যোগ করুন",
-          href: "/app/products/add",
+          href: "/app/managements/products/add",
           icon: PlusCircle,
         },
         {
           name: "নতুন পিরিয়ড যোগ করুন",
-          href: "/app/products/add-period",
+          href: "/app/managements/add-period",
+          icon: CalendarPlus,
+        },
+        {
+          name: "ওপেনিং ও প্রাইস আপডেট",
+          href: "/app/managements/opening-value-update",
           icon: CalendarPlus,
         },
       ],

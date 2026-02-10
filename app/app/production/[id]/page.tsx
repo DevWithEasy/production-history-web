@@ -938,7 +938,6 @@ export default function SectionProductionPage() {
                                         ? "border-red-500 bg-red-50"
                                         : "border-gray-300"
                                     }`}
-                                    min="0"
                                     placeholder="৳"
                                     disabled={saving[`${product.id}-price`]}
                                   />
