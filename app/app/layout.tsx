@@ -168,6 +168,11 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           href: "/app/managements/opening-value-update",
           icon: CalendarPlus,
         },
+        {
+          name: "ডেইলি প্রোডাকশন কপি",
+          href: "/app/managements/daily-production-copy",
+          icon: CalendarPlus,
+        },
       ],
     },
     {
@@ -183,7 +188,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   ];
 
   return (
-    <div className="flex h-screen bg-gray-50 font-[family-name:var(--font-tiro-bangla)]">
+    <div className="flex h-screen bg-gray-50 font-(family-name:--font-tiro-bangla)">
       {/* Mobile Menu Button */}
       <button
         onClick={() => setSidebarOpen(true)}
