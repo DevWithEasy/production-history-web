@@ -2,7 +2,18 @@
 
 import { Product } from "@/types/Product.Types";
 import Firebase from "@/utils/firebase";
+import { db } from "@/utils/firebaseConfig";
 import { getPeriod } from "@/utils/storage";
+import {
+  collection,
+  deleteDoc,
+  deleteField,
+  doc,
+  getDoc,
+  getDocs,
+  setDoc,
+  updateDoc,
+} from "firebase/firestore";
 import {
   AlertCircle,
   Calendar,
@@ -72,7 +83,6 @@ export default function OpeningValueUpdate() {
     setProductsLoading(true);
     try {
       const data = await Firebase.getDocuments<ProductWithID>(collectionName);
-      console.log("Products loaded:", data.length);
       setProducts(data);
     } catch (err) {
       console.error("Error loading products:", err);
@@ -212,7 +222,6 @@ export default function OpeningValueUpdate() {
       const product = products.find((p) => p.code === item.code);
 
       if (!product) continue;
-
       try {
         const updateData: any = {};
 
@@ -266,7 +275,7 @@ export default function OpeningValueUpdate() {
     // Create template data
     const templateData =
       products.length > 0
-        ? products.slice(0, 20).map((p) => ({
+        ? products.map((p) => ({
             code: p.code,
             name: p.name,
             opening: p.opening,
@@ -628,7 +637,7 @@ export default function OpeningValueUpdate() {
               <div className="overflow-x-auto">
                 <table className="w-full border-collapse">
                   <thead>
-                    <tr className="bg-gradient-to-r from-purple-50 to-pink-50">
+                    <tr className="bg-linear-to-r from-purple-50 to-pink-50">
                       <th className="p-3 text-left font-semibold text-purple-800 border-b">
                         #
                       </th>
@@ -667,9 +676,7 @@ export default function OpeningValueUpdate() {
                               {item.code}
                             </code>
                           </td>
-                          <td className="p-3 font-[family-name:var(--font-tiro-bangla)]">
-                            {item.name || "-"}
-                          </td>
+                          <td className="p-3">{item.name || "-"}</td>
                           <td className="p-3 text-right font-semibold">
                             {item.opening.toLocaleString()}
                           </td>
@@ -679,13 +686,11 @@ export default function OpeningValueUpdate() {
                           <td className="p-3">
                             {isMatched ? (
                               <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-green-100 text-green-800 text-sm">
-                                <CheckCircle className="h-4 w-4" />
-                                মিলেছে
+                                <CheckCircle className="h-3 w-3" />
                               </span>
                             ) : (
                               <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-red-100 text-red-800 text-sm">
-                                <XCircle className="h-4 w-4" />
-                                নেই
+                                <XCircle className="h-3 w-3" />
                               </span>
                             )}
                           </td>
@@ -695,7 +700,7 @@ export default function OpeningValueUpdate() {
                   </tbody>
                 </table>
                 {filteredExcelData.length > 15 && (
-                  <p className="text-center text-gray-500 mt-3 font-[family-name:var(--font-tiro-bangla)]">
+                  <p className="text-center text-gray-500 mt-3">
                     আরও {filteredExcelData.length - 15} টি রো আছে...
                   </p>
                 )}
@@ -703,7 +708,7 @@ export default function OpeningValueUpdate() {
             ) : (
               <div className="text-center py-8 text-gray-500">
                 <FileSpreadsheet className="h-12 w-12 mx-auto mb-3 text-gray-300" />
-                <p className="font-[family-name:var(--font-tiro-bangla)]">
+                <p className="">
                   {excelData.length === 0
                     ? "এক্সেল ফাইল আপলোড করুন"
                     : "কোন ম্যাচিং ডাটা পাওয়া যায়নি"}
@@ -730,15 +735,13 @@ export default function OpeningValueUpdate() {
             {productsLoading ? (
               <div className="text-center py-8">
                 <Loader2 className="h-8 w-8 animate-spin mx-auto text-amber-600" />
-                <p className="mt-3 text-gray-600 font-[family-name:var(--font-tiro-bangla)]">
-                  প্রোডাক্ট লোড হচ্ছে...
-                </p>
+                <p className="mt-3 text-gray-600">প্রোডাক্ট লোড হচ্ছে...</p>
               </div>
             ) : filteredProducts.length > 0 ? (
               <div className="overflow-x-auto">
                 <table className="w-full border-collapse">
                   <thead>
-                    <tr className="bg-gradient-to-r from-amber-50 to-orange-50">
+                    <tr className="bg-linear-to-r from-amber-50 to-orange-50">
                       <th className="p-3 text-left font-semibold text-amber-800 border-b">
                         কোড
                       </th>
@@ -754,7 +757,7 @@ export default function OpeningValueUpdate() {
                     </tr>
                   </thead>
                   <tbody>
-                    {filteredProducts.slice(0, 10).map((product, i) => {
+                    {filteredProducts.slice(0, 15).map((product, i) => {
                       const hasExcelMatch = excelData.some(
                         (item) => item.code === product.code,
                       );
@@ -770,9 +773,7 @@ export default function OpeningValueUpdate() {
                               {product.code}
                             </code>
                           </td>
-                          <td className="p-3 font-[family-name:var(--font-tiro-bangla)]">
-                            {product.name}
-                          </td>
+                          <td className="p-3">{product.name}</td>
                           <td className="p-3 text-right font-semibold">
                             <span
                               className={`px-2 py-1 rounded ${hasExcelMatch ? "bg-blue-100 text-blue-800" : ""}`}
@@ -789,7 +790,7 @@ export default function OpeningValueUpdate() {
                   </tbody>
                 </table>
                 {filteredProducts.length > 10 && (
-                  <p className="text-center text-gray-500 mt-3 font-[family-name:var(--font-tiro-bangla)]">
+                  <p className="text-center text-gray-500 mt-3">
                     আরও {filteredProducts.length - 10} টি প্রোডাক্ট আছে...
                   </p>
                 )}
@@ -797,7 +798,7 @@ export default function OpeningValueUpdate() {
             ) : (
               <div className="text-center py-8 text-gray-500">
                 <AlertCircle className="h-12 w-12 mx-auto mb-3 text-gray-300" />
-                <p className="font-[family-name:var(--font-tiro-bangla)]">
+                <p className="">
                   {searchTerm
                     ? "সার্চ রেজাল্টে কোন প্রোডাক্ট নেই"
                     : "ডাটাবেজে কোন প্রোডাক্ট নেই"}
@@ -809,7 +810,7 @@ export default function OpeningValueUpdate() {
 
         {/* Footer Info */}
         <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="bg-gradient-to-r from-blue-50 to-white p-5 rounded-xl border border-blue-200">
+          <div className="bg-linear-to-r from-blue-50 to-white p-5 rounded-xl border border-blue-200">
             <div className="flex items-center gap-3 mb-3">
               <div className="bg-blue-100 p-2 rounded-lg">
                 <FileSpreadsheet className="h-5 w-5 text-blue-600" />

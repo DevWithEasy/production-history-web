@@ -3,7 +3,17 @@
 import { Product } from "@/types/Product.Types";
 import Firebase from "@/utils/firebase";
 import { getPeriod } from "@/utils/storage";
-import { Package, Plus, Save, Info, Tag, Hash, DollarSign, Factory, Loader2 } from "lucide-react";
+import {
+  DollarSign,
+  Factory,
+  Hash,
+  Info,
+  Loader2,
+  Package,
+  Plus,
+  Save,
+  Tag,
+} from "lucide-react";
 import { useEffect, useState } from "react";
 
 interface Section {
@@ -37,7 +47,7 @@ export default function ProductAdd() {
     Firebase.getDocuments<Section>("sections").then((data) => {
       setSections(data);
       if (data.length > 0) {
-        setForm(prev => ({ ...prev, section: data[0].id }));
+        setForm((prev) => ({ ...prev, section: data[0].id }));
       }
       setSectionLoading(false);
     });
@@ -55,7 +65,7 @@ export default function ProductAdd() {
         const products = await Firebase.getFindDocuments<Product>(
           "products",
           "section",
-          form.section
+          form.section,
         );
 
         if (products.length > 0) {
@@ -64,7 +74,7 @@ export default function ProductAdd() {
               name: i.name,
               unit: i.unit,
               value: i.value,
-            }))
+            })),
           );
         } else {
           setInfos([]);
@@ -80,7 +90,7 @@ export default function ProductAdd() {
 
   // ✍️ form input
   const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
   ) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
@@ -95,18 +105,23 @@ export default function ProductAdd() {
   // 💾 submit
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     // Validation
     if (!form.section) {
       alert("দয়া করে একটি সেকশন নির্বাচন করুন");
       return;
     }
-    
+
+    if (!form.code.trim()) {
+      alert("দয়া করে কোড নাম লিখুন");
+      return;
+    }
+
     if (!form.name.trim()) {
       alert("দয়া করে প্রোডাক্টের নাম লিখুন");
       return;
     }
-    
+
     if (!form.price || Number(form.price) <= 0) {
       alert("দয়া করে একটি বৈধ মূল্য লিখুন");
       return;
@@ -116,8 +131,18 @@ export default function ProductAdd() {
 
     const { year, month } = getPeriod();
     const monthName = [
-      "January", "February", "March", "April", "May", "June",
-      "July", "August", "September", "October", "November", "December"
+      "January",
+      "February",
+      "March",
+      "April",
+      "May",
+      "June",
+      "July",
+      "August",
+      "September",
+      "October",
+      "November",
+      "December",
     ][month - 1];
 
     const product: Product = {
@@ -140,13 +165,13 @@ export default function ProductAdd() {
 
     try {
       // master collection-এ সেভ করুন
-      await Firebase.createDocWithName("products", product.name, product);
+      await Firebase.createDocWithName("products", product.code, product);
 
       // production collection-এ সেভ করুন
       await Firebase.createDocWithName(
         `production/${year}/months/${monthName}/products`,
         product.name,
-        product
+        product,
       );
 
       alert("প্রোডাক্ট সফলভাবে যোগ করা হয়েছে!");
@@ -169,7 +194,7 @@ export default function ProductAdd() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-gray-50 p-4 md:p-6">
+    <div className="min-h-screen bg-linear-to-br from-blue-50 to-gray-50 p-4 md:p-6 font-(family-name:--font-tiro-bangla)">
       <div className="max-w-4xl mx-auto">
         {/* Header Section */}
         <div className="mb-8">
@@ -178,8 +203,10 @@ export default function ProductAdd() {
               <Package className="h-8 w-8 text-white" />
             </div>
             <div>
-              <h1 className="text-3xl font-bold text-gray-800">নতুন প্রোডাক্ট যোগ করুন</h1>
-              <p className="text-gray-600 font-[family-name:var(--font-tiro-bangla)]">
+              <h1 className="text-3xl font-bold text-gray-800">
+                নতুন প্রোডাক্ট যোগ করুন
+              </h1>
+              <p className="text-gray-600">
                 প্রোডাকশন সিস্টেমে নতুন প্রোডাক্ট যুক্ত করুন
               </p>
             </div>
@@ -210,7 +237,11 @@ export default function ProductAdd() {
                 >
                   <option value="">সেকশন নির্বাচন করুন</option>
                   {sections.map((s) => (
-                    <option key={s.id} value={s.id} className="font-[family-name:var(--font-tiro-bangla)]">
+                    <option
+                      key={s.id}
+                      value={s.id}
+                      className="font-[family-name:var(--font-tiro-bangla)]"
+                    >
                       {s.name}
                     </option>
                   ))}
@@ -231,7 +262,7 @@ export default function ProductAdd() {
                   placeholder="প্রোডাক্টের সম্পূর্ণ নাম লিখুন"
                   value={form.name}
                   onChange={handleChange}
-                  className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all font-[family-name:var(--font-tiro-bangla)]"
+                  className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
                   required
                 />
               </div>
@@ -291,22 +322,33 @@ export default function ProductAdd() {
               <div className="bg-gradient-to-r from-blue-50 to-white p-6 rounded-xl border border-blue-200">
                 <div className="flex items-center gap-3 mb-6">
                   <Info className="h-6 w-6 text-blue-600" />
-                  <h3 className="text-xl font-bold text-gray-800">অতিরিক্ত তথ্য</h3>
+                  <h3 className="text-xl font-bold text-gray-800">
+                    অতিরিক্ত তথ্য
+                  </h3>
                 </div>
-                
+
                 <div className="space-y-4">
                   <div className="grid grid-cols-3 gap-4 bg-blue-100 p-3 rounded-lg">
-                    <div className="font-semibold text-blue-800 text-center">নাম</div>
-                    <div className="font-semibold text-blue-800 text-center">একক</div>
-                    <div className="font-semibold text-blue-800 text-center">মান</div>
+                    <div className="font-semibold text-blue-800 text-center">
+                      নাম
+                    </div>
+                    <div className="font-semibold text-blue-800 text-center">
+                      একক
+                    </div>
+                    <div className="font-semibold text-blue-800 text-center">
+                      মান
+                    </div>
                   </div>
-                  
+
                   {infos.map((info, i) => (
-                    <div key={i} className="grid grid-cols-3 gap-4 items-center bg-white p-4 rounded-lg border border-gray-200 hover:border-blue-300 transition-colors">
+                    <div
+                      key={i}
+                      className="grid grid-cols-3 gap-4 items-center bg-white p-4 rounded-lg border border-gray-200 hover:border-blue-300 transition-colors"
+                    >
                       <input
                         value={info.name}
                         disabled
-                        className="px-3 py-2.5 border border-gray-300 rounded-lg bg-gray-50 text-gray-700 font-[family-name:var(--font-tiro-bangla)] text-center"
+                        className="px-3 py-2.5 border border-gray-300 rounded-lg bg-gray-50 text-gray-700 text-center"
                       />
                       <input
                         value={info.unit}
@@ -316,7 +358,9 @@ export default function ProductAdd() {
                       <input
                         type="number"
                         value={info.value}
-                        onChange={(e) => handleInfoValueChange(i, e.target.value)}
+                        onChange={(e) =>
+                          handleInfoValueChange(i, e.target.value)
+                        }
                         className="px-3 py-2.5 border-2 border-blue-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-center"
                         placeholder="মান লিখুন"
                       />
@@ -349,10 +393,11 @@ export default function ProductAdd() {
                   </>
                 )}
               </button>
-              
+
               {/* Help Text */}
-              <p className="mt-4 text-sm text-gray-600 text-center font-[family-name:var(--font-tiro-bangla)]">
-                ⓘ এই প্রোডাক্ট মাস্টার তালিকা এবং বর্তমান পিরিয়ডের প্রোডাকশন ডাটাবেজে সংরক্ষণ হবে
+              <p className="mt-4 text-sm text-gray-600 text-center">
+                ⓘ এই প্রোডাক্ট মাস্টার তালিকা এবং বর্তমান পিরিয়ডের প্রোডাকশন
+                ডাটাবেজে সংরক্ষণ হবে
               </p>
             </div>
           </form>
@@ -367,11 +412,12 @@ export default function ProductAdd() {
               </div>
               <h4 className="font-bold text-gray-800">মাস্টার তালিকা</h4>
             </div>
-            <p className="text-gray-600 text-sm font-[family-name:var(--font-tiro-bangla)]">
-              প্রোডাক্ট মাস্টার তালিকায় সংরক্ষণ হবে এবং সব পিরিয়ডে ব্যবহার করা যাবে
+            <p className="text-gray-600 text-sm">
+              প্রোডাক্ট মাস্টার তালিকায় সংরক্ষণ হবে এবং সব পিরিয়ডে ব্যবহার করা
+              যাবে
             </p>
           </div>
-          
+
           <div className="bg-gradient-to-r from-purple-50 to-white p-6 rounded-xl border border-purple-200">
             <div className="flex items-center gap-3 mb-4">
               <div className="bg-purple-100 p-3 rounded-lg">
@@ -379,11 +425,11 @@ export default function ProductAdd() {
               </div>
               <h4 className="font-bold text-gray-800">বর্তমান পিরিয়ড</h4>
             </div>
-            <p className="text-gray-600 text-sm font-[family-name:var(--font-tiro-bangla)]">
+            <p className="text-gray-600 text-sm">
               বর্তমান পিরিয়ডের প্রোডাকশন ডাটাবেজে স্বয়ংক্রিয়ভাবে যোগ হবে
             </p>
           </div>
-          
+
           <div className="bg-gradient-to-r from-blue-50 to-white p-6 rounded-xl border border-blue-200">
             <div className="flex items-center gap-3 mb-4">
               <div className="bg-blue-100 p-3 rounded-lg">
@@ -391,7 +437,7 @@ export default function ProductAdd() {
               </div>
               <h4 className="font-bold text-gray-800">দ্রুত প্রোডাকশন</h4>
             </div>
-            <p className="text-gray-600 text-sm font-[family-name:var(--font-tiro-bangla)]">
+            <p className="text-gray-600 text-sm">
               নতুন প্রোডাক্ট যোগ করার পরই দৈনিক প্রোডাকশন এন্ট্রি শুরু করা যাবে
             </p>
           </div>
