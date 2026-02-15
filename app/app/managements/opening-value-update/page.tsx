@@ -2,18 +2,7 @@
 
 import { Product } from "@/types/Product.Types";
 import Firebase from "@/utils/firebase";
-import { db } from "@/utils/firebaseConfig";
 import { getPeriod } from "@/utils/storage";
-import {
-  collection,
-  deleteDoc,
-  deleteField,
-  doc,
-  getDoc,
-  getDocs,
-  setDoc,
-  updateDoc,
-} from "firebase/firestore";
 import {
   AlertCircle,
   Calendar,
