@@ -170,7 +170,7 @@ export default function ProductAdd() {
       // production collection-এ সেভ করুন
       await Firebase.createDocWithName(
         `production/${year}/months/${monthName}/products`,
-        product.name,
+        product.code,
         product,
       );
 
