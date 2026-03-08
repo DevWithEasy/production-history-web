@@ -70,7 +70,7 @@ export default function CreatePeriod() {
       for (const product of products) {
         await Firebase.createDocWithName(
           `production/${year}/months/${selectedMonth.en}/products`,
-          product.name,
+          product.code,
           product
         );
       }
