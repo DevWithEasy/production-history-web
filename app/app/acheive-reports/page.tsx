@@ -603,7 +603,7 @@ export default function AchievementReports() {
                   </td>
                   <td className="border border-gray-300 p-1 text-center print:py-0 print:px-1 number-column">
                     <span className="print:text-xs">
-                      ৳{formatNumber(getTotalTargetValue(products))}
+                      ৳{formatNumber(getTotalTargetValue())}
                     </span>
                   </td>
                   <td className="border border-gray-300 p-1 text-center print:py-0 print:px-1 number-column">
