@@ -104,6 +104,7 @@ export default function Manpower() {
     { id: "vermicelli", name: "ভার্মিসেলি", color: "bg-teal-500" },
     { id: "wafer", name: "ওয়েফার", color: "bg-orange-500" },
     { id: "water_and_beverage", name: "পানি ও পানীয়", color: "bg-cyan-500" },
+    { id: "bun_ruti", name: "বন রুটি", color: "bg-pink-500" },
   ];
 
   useEffect(() => {
@@ -395,7 +396,7 @@ export default function Manpower() {
               </div>
               <div>
                 <h3 className="text-lg font-bold text-gray-800">মাসিক তুলনা</h3>
-                <p className="text-gray-600 text-sm font-[family-name:var(--font-tiro-bangla)]">
+                <p className="text-gray-600 text-sm font-(family-name:--font-tiro-bangla)">
                   {monthName} {year} বনাম {prevMonthName} {prevMonthInfo.year}
                 </p>
               </div>
@@ -625,7 +626,7 @@ export default function Manpower() {
             </div>
 
             {/* Quick Stats */}
-            <div className="bg-gradient-to-r from-blue-50 to-white p-6 rounded-2xl border border-blue-200">
+            <div className="bg-linear-to-r from-blue-50 to-white p-6 rounded-2xl border border-blue-200">
               <div className="flex items-center gap-2 mb-4">
                 <Zap className="h-5 w-5 text-blue-600" />
                 <h3 className="font-bold text-gray-800">দ্রুত পরিসংখ্যান</h3>
@@ -685,7 +686,7 @@ export default function Manpower() {
         <div className="mt-8 text-center">
           <div className="inline-flex items-center gap-2 text-gray-600 text-sm">
             <UserCheck className="h-4 w-4" />
-            <span className="font-[family-name:var(--font-tiro-bangla)]">
+            <span className="font-(family-name:--font-tiro-bangla)">
               সর্বশেষ আপডেট: {new Date().toLocaleDateString("bn-BD")}
             </span>
           </div>

@@ -136,6 +136,7 @@ export default function Dashboard() {
       vermicelli: "ভার্মিসেলি",
       wafer: "ওয়েফার",
       water_and_beverage: "পানি ও পানীয়",
+      bun_ruti: "বন রুটি",
       uncategorized: "অন্যান্য",
     };
 

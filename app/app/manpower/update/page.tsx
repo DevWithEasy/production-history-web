@@ -58,6 +58,7 @@ export default function ManpowerUpdate() {
     { id: "vermicelli", name: "ভার্মিসেলি" },
     { id: "wafer", name: "ওয়েফার" },
     { id: "water_and_beverage", name: "পানি ও পানীয়" },
+    { id: "bun_ruti", name: "বন রুটি" },
   ];
 
   const [manpowerData, setManpowerData] = useState<SectionManpowerData>({});
@@ -106,6 +107,7 @@ export default function ManpowerUpdate() {
             vermicelli: item.vermicelli || 0,
             wafer: item.wafer || 0,
             water_and_beverage: item.water_and_beverage || 0,
+            bun_ruti: item.bun_ruti || 0,
             total_manpower: item.total_manpower || 0,
           };
         });
@@ -126,6 +128,7 @@ export default function ManpowerUpdate() {
             vermicelli: 0,
             wafer: 0,
             water_and_beverage: 0,
+            bun_ruti : 0,
             total_manpower: 0,
           };
         }
@@ -161,6 +164,7 @@ export default function ManpowerUpdate() {
       vermicelli: 0,
       wafer: 0,
       water_and_beverage: 0,
+      bun_ruti : 0,
       total_manpower: 0,
     };
 
@@ -241,6 +245,7 @@ export default function ManpowerUpdate() {
       vermicelli: 0,
       wafer: 0,
       water_and_beverage: 0,
+      bun_ruti : 0,
       total_manpower: 0,
     };
 
