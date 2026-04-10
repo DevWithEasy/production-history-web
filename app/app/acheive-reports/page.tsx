@@ -40,7 +40,7 @@ export default function AchievementReports() {
   // প্রিন্ট ফাংশন
   const handlePrint = useReactToPrint({
     contentRef,
-    documentTitle: `Achievement_Report_${selectedDate.getDate()}_${monthName}_${year}`,
+    documentTitle: `FG_Production_Statement_${selectedDate.getDate()}_${monthName}_${year}`,
     pageStyle: `
       @media print {
         @page {
