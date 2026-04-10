@@ -299,9 +299,9 @@ export default function AchievementReports() {
   };
 
   // টোটাল টাগেট ভ্যালু
-  const getTotalTargetValue = (products): number => {
+  const getTotalTargetValue = (): number => {
     return products.reduce(
-      (sum: number, product) => sum + product.sales_target * product.price,
+      (sum, product) => sum + product.sales_target * product.price,
       0,
     );
   };
@@ -406,7 +406,15 @@ export default function AchievementReports() {
               Period: {monthName} {year} | Date: {formattedDate}
             </p>
           </div>
-          <p className="note mt-4">Note : This report is generated automatically depending on the data of distribution department and sales department <b style={{background : '#cccccc',color : 'black'}}>from 1 to {selectedDate.getDate()} {monthName} {year}</b> | System Link https://snb-ph.vercel.app | Developed By CodeOrbitStudio | Developer Robiul Awal - +8801717642515</p>
+          <p className="note mt-4">
+            Note : This report is generated automatically depending on the data
+            of distribution department and sales department{" "}
+            <b style={{ background: "#cccccc", color: "black" }}>
+              from 1 to {selectedDate.getDate()} {monthName} {year}
+            </b>{" "}
+            | System Link https://snb-ph.vercel.app | Developed By
+            CodeOrbitStudio | Developer Robiul Awal - +8801717642515
+          </p>
           <hr className="my-2 border-t border-gray-600" />
         </div>
 
@@ -696,10 +704,10 @@ export default function AchievementReports() {
             font-size: 8px !important;
             padding: 1px 2px !important;
           }
-          .note{
+          .note {
             font-size: 10px !important;
-            font-style : italic !important;
-            color : red !important;
+            font-style: italic !important;
+            color: red !important;
           }
         }
       `}</style>
