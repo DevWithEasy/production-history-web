@@ -176,9 +176,14 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       ],
     },
     {
-      name: "রিপোর্টস",
+      name: "দৈনিক রিপোর্টস",
       icon: BarChart3,
       href: "/app/reports",
+    },
+    {
+      name: "এচিভমেন্ট % রিপোর্টস",
+      icon: BarChart3,
+      href: "/app/acheive-reports",
     },
     {
       name: "বেতন বৃদ্ধি",
