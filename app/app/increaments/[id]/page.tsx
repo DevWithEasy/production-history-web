@@ -22,6 +22,7 @@ import { useReactToPrint } from "react-to-print";
 
 type Person = {
   name: string;
+  designation: string;
   section: string;
   join_date: string;
   p_id: string;
@@ -50,6 +51,7 @@ export default function Increment() {
   const [hasChanges, setHasChanges] = useState<boolean>(false);
   const [newPerson, setNewPerson] = useState<Person>({
     name: "",
+    designation: "",
     section: "বিস্কুট",
     join_date: "",
     p_id: "",
@@ -205,8 +207,12 @@ export default function Increment() {
           min-width: 40px !important;
         }
         .section-column {
-          width: 10% !important;
-          min-width: 80px !important;
+          width: 9% !important;
+          min-width: 70px !important;
+        }
+        .designation-column {
+          width: 13% !important;
+          min-width: 90px !important;
         }
         .id-column {
           width: 9% !important;
@@ -327,6 +333,7 @@ export default function Increment() {
 
     setNewPerson({
       name: "",
+      designation: "",
       section: newPerson.section,
       join_date: "",
       p_id: "",
@@ -584,6 +591,24 @@ export default function Increment() {
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
+                      পদবী
+                    </label>
+                    <input
+                      type="text"
+                      value={newPerson.designation}
+                      onChange={(e) =>
+                        setNewPerson({
+                          ...newPerson,
+                          designation: e.target.value,
+                        })
+                      }
+                      placeholder="পদবী লিখুন"
+                      className="w-full px-4 py-2.5 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
                       সেকশন
                     </label>
                     <select
@@ -606,6 +631,7 @@ export default function Increment() {
                         "ভারমিসলি",
                         "স্টোর",
                         "ডিস্ট্রিবিউশিন",
+                        "ট্রান্সপোর্ট",
                         "এডমিন",
                       ].map((s) => (
                         <option key={s} value={s}>
@@ -713,6 +739,9 @@ export default function Increment() {
                             নাম
                           </th>
                           <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
+                            পদবী
+                          </th>
+                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
                             সেকশন
                           </th>
                           <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
@@ -747,6 +776,20 @@ export default function Increment() {
                                 value={p.name}
                                 onChange={(e) =>
                                   updatePersonField(i, "name", e.target.value)
+                                }
+                                className="px-2 py-1.5 border border-gray-300 rounded w-full focus:ring-1 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                              />
+                            </td>
+                            <td className="px-4 py-3 text-sm">
+                              <input
+                                type="text"
+                                value={p.designation || ""}
+                                onChange={(e) =>
+                                  updatePersonField(
+                                    i,
+                                    "designation",
+                                    e.target.value,
+                                  )
                                 }
                                 className="px-2 py-1.5 border border-gray-300 rounded w-full focus:ring-1 focus:ring-blue-500 focus:border-blue-500 outline-none"
                               />
@@ -933,6 +976,9 @@ export default function Increment() {
                         <th className="px-4 py-3 text-center font-bold border border-gray-300 name-column">
                           কর্মীর নাম
                         </th>
+                        <th className="px-4 py-3 text-center font-bold border border-gray-300 designation-column">
+                          পদবী
+                        </th>
                         <th className="px-4 py-3 text-center font-bold border border-gray-300 section-column">
                           সেকশন
                         </th>
@@ -959,6 +1005,9 @@ export default function Increment() {
                           <td className="px-4 py-3 border border-gray-300 font-medium name-column">
                             {p.name}
                           </td>
+                          <td className="px-4 py-3 text-center border border-gray-300 designation-column">
+                            {p.designation || ""}
+                          </td>
                           <td className="px-4 py-3 text-center border border-gray-300 section-column">
                             {p.section}
                           </td>
@@ -980,7 +1029,7 @@ export default function Increment() {
                     <tfoot>
                       <tr className="bg-gray-100">
                         <td
-                          colSpan={5}
+                          colSpan={6}
                           className="px-4 py-3 text-sm text-right font-bold border border-gray-300"
                         >
                           মোট:

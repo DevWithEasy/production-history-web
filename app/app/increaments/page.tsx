@@ -2,16 +2,27 @@
 import Firebase from "@/utils/firebase";
 import { db } from "@/utils/firebaseConfig";
 import { addDoc, collection, doc, getDoc } from "firebase/firestore";
+import {
+  Calendar,
+  ChevronRight,
+  Clock,
+  Edit,
+  Eye,
+  FileText,
+  PlusCircle,
+  Trash2,
+  Users,
+} from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { FileText, PlusCircle, Calendar, Users, Eye, Trash2, Edit, Clock, ChevronRight } from "lucide-react";
 
 type Increament = {
   name: string;
   header: string;
   person: {
     name: string;
+    designation: string;
     section: string;
     join_date: string;
     p_id: string;
@@ -30,7 +41,7 @@ export default function Increments() {
   const [name, setName] = useState<string>("নতুন বেতন বৃদ্ধি আবেদন");
   const [loading, setLoading] = useState<boolean>(true);
   const [creating, setCreating] = useState<boolean>(false);
-  
+
   useEffect(() => {
     fetchData();
   }, []);
@@ -64,7 +75,7 @@ export default function Increments() {
       setCreating(true);
       const docRef = doc(db, "increaments", "master");
       const docSnap = await getDoc(docRef);
-      
+
       if (!docSnap.exists()) {
         console.error("Master document not found");
         alert("টেমপ্লেট ডকুমেন্ট পাওয়া যায়নি");
@@ -78,7 +89,7 @@ export default function Increments() {
         created_at: new Date(),
         person: data.person || [],
       });
-      
+
       router.push(`/app/increaments/${docCreateRef.id}`);
     } catch (error) {
       console.error("Error creating increment:", error);
@@ -90,7 +101,7 @@ export default function Increments() {
 
   const formatDate = (timestamp: any) => {
     if (!timestamp) return "তারিখ নেই";
-    
+
     try {
       const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
       return date.toLocaleDateString("bn-BD", {
@@ -105,7 +116,7 @@ export default function Increments() {
 
   const formatTime = (timestamp: any) => {
     if (!timestamp) return "";
-    
+
     try {
       const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
       return date.toLocaleTimeString("bn-BD", {
@@ -117,10 +128,14 @@ export default function Increments() {
     }
   };
 
-  const deleteIncrement = async (id: string, name: string, e: React.MouseEvent) => {
+  const deleteIncrement = async (
+    id: string,
+    name: string,
+    e: React.MouseEvent,
+  ) => {
     e.stopPropagation();
     e.preventDefault();
-    
+
     if (!confirm(`আপনি কি "${name}" আবেদনটি ডিলিট করতে চান?`)) {
       return;
     }
@@ -156,7 +171,9 @@ export default function Increments() {
                 <Calendar className="text-blue-600" />
                 <div>
                   <p className="font-medium text-gray-800">মোট আবেদন</p>
-                  <p className="text-2xl font-bold text-blue-600">{data.length}</p>
+                  <p className="text-2xl font-bold text-blue-600">
+                    {data.length}
+                  </p>
                 </div>
               </div>
             </div>
@@ -167,9 +184,11 @@ export default function Increments() {
         <div className="bg-linear-to-r from-blue-50 to-white rounded-xl shadow-lg p-6 mb-8 border border-blue-200">
           <div className="flex items-center gap-3 mb-6">
             <PlusCircle className="text-blue-600 h-7 w-7" />
-            <h2 className="text-xl font-bold text-gray-800">নতুন আবেদন তৈরি করুন</h2>
+            <h2 className="text-xl font-bold text-gray-800">
+              নতুন আবেদন তৈরি করুন
+            </h2>
           </div>
-          
+
           <div className="space-y-4">
             <div>
               <label className="block font-semibold text-gray-700 mb-2">
@@ -183,7 +202,7 @@ export default function Increments() {
                 className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
               />
             </div>
-            
+
             <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
               <div className="text-sm text-gray-600">
                 <p className="">
@@ -217,7 +236,9 @@ export default function Increments() {
             <div className="flex flex-col md:flex-row md:items-center justify-between">
               <div className="flex items-center gap-3">
                 <FileText className="text-gray-700" />
-                <h2 className="text-xl font-bold text-gray-800">সকল আবেদনসমূহ</h2>
+                <h2 className="text-xl font-bold text-gray-800">
+                  সকল আবেদনসমূহ
+                </h2>
               </div>
               <div className="mt-2 md:mt-0">
                 <span className="text-sm text-gray-600">
@@ -226,7 +247,7 @@ export default function Increments() {
               </div>
             </div>
           </div>
-          
+
           {loading ? (
             <div className="p-12 text-center">
               <div className="inline-block animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-600 mb-4"></div>
@@ -253,11 +274,11 @@ export default function Increments() {
                           <span>{d.person?.length || 0} জন কর্মী</span>
                         </div>
                       </div>
-                      
+
                       <h3 className="text-base font-bold text-gray-800 mb-2 group-hover:text-blue-700 transition-colors">
                         {d.name || "নামবিহীন আবেদন"}
                       </h3>
-                      
+
                       <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600">
                         <div className="flex items-center gap-2">
                           <Calendar className="h-4 w-4" />
@@ -273,7 +294,7 @@ export default function Increments() {
                         )}
                       </div>
                     </div>
-                    
+
                     {/* Right Side - Actions */}
                     <div className="flex items-center gap-3 text-sm">
                       <button
@@ -302,13 +323,14 @@ export default function Increments() {
                 কোন আবেদন পাওয়া যায়নি
               </h3>
               <p className="text-gray-600 mb-8 max-w-md mx-auto">
-                এখনও কোন বেতন বৃদ্ধি আবেদন তৈরি করা হয়নি। উপরের ফর্ম থেকে প্রথম আবেদন তৈরি করুন।
+                এখনও কোন বেতন বৃদ্ধি আবেদন তৈরি করা হয়নি। উপরের ফর্ম থেকে প্রথম
+                আবেদন তৈরি করুন।
               </p>
               <button
                 onClick={() => {
                   setName("ডিসেম্বর ২০২৬ বেতন বৃদ্ধি আবেদন");
                   setTimeout(() => {
-                    document.querySelector('input')?.focus();
+                    document.querySelector("input")?.focus();
                   }, 100);
                 }}
                 className="px-6 py-3 bg-blue-100 text-blue-700 font-semibold rounded-lg hover:bg-blue-200 transition-colors inline-flex items-center gap-2"
@@ -330,10 +352,11 @@ export default function Increments() {
               <h4 className="font-bold text-gray-800">আবেদন তৈরি</h4>
             </div>
             <p className="text-gray-600 text-sm">
-              মাস্টার টেমপ্লেট থেকে নতুন আবেদন তৈরি করুন। কর্মীদের তথ্য যোগ করুন এবং প্রয়োজনীয় সম্পাদনা করুন।
+              মাস্টার টেমপ্লেট থেকে নতুন আবেদন তৈরি করুন। কর্মীদের তথ্য যোগ করুন
+              এবং প্রয়োজনীয় সম্পাদনা করুন।
             </p>
           </div>
-          
+
           <div className="bg-linear-to-r from-purple-50 to-white p-6 rounded-xl border border-purple-200">
             <div className="flex items-center gap-3 mb-4">
               <div className="bg-purple-100 p-3 rounded-lg">
@@ -342,10 +365,11 @@ export default function Increments() {
               <h4 className="font-bold text-gray-800">কর্মী যোগ করুন</h4>
             </div>
             <p className="text-gray-600 text-sm">
-              প্রতিটি আবেদনে প্রয়োজনীয় সংখ্যক কর্মী যোগ করুন। তাদের বর্তমান ও প্রস্তাবিত বেতন নির্ধারণ করুন।
+              প্রতিটি আবেদনে প্রয়োজনীয় সংখ্যক কর্মী যোগ করুন। তাদের বর্তমান ও
+              প্রস্তাবিত বেতন নির্ধারণ করুন।
             </p>
           </div>
-          
+
           <div className="bg-linear-to-r from-blue-50 to-white p-6 rounded-xl border border-blue-200">
             <div className="flex items-center gap-3 mb-4">
               <div className="bg-blue-100 p-3 rounded-lg">
@@ -354,7 +378,8 @@ export default function Increments() {
               <h4 className="font-bold text-gray-800">প্রিন্ট ও শেয়ার</h4>
             </div>
             <p className="text-gray-600 text-sm">
-              তৈরি করা আবেদন প্রিন্ট করুন বা পিডিএফ হিসেবে ডাউনলোড করুন। প্রয়োজনমতো সংশোধন করুন।
+              তৈরি করা আবেদন প্রিন্ট করুন বা পিডিএফ হিসেবে ডাউনলোড করুন।
+              প্রয়োজনমতো সংশোধন করুন।
             </p>
           </div>
         </div>
