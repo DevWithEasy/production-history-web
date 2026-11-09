@@ -633,6 +633,7 @@ export default function Increment() {
                         "ডিস্ট্রিবিউশিন",
                         "ট্রান্সপোর্ট",
                         "এডমিন",
+                        "মেইনটেন্যান্স"
                       ].map((s) => (
                         <option key={s} value={s}>
                           {s}
