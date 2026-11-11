@@ -119,7 +119,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         },
         ...sections.map((section) => ({
           name: section.name,
-          href: `/app/production/${section.id}`,
+          href: `/app/production/view?id=${section.id}`,
           icon: ChevronRight,
         })),
       ],

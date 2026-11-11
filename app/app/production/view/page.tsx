@@ -29,8 +29,8 @@ import {
   Target,
   TrendingUp,
 } from "lucide-react";
-import { useParams } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { Suspense, useEffect, useRef, useState } from "react";
 
 type ProductionData = {
   date: number;
@@ -70,9 +70,23 @@ type Entry = {
   }[];
 };
 
-export default function SectionProductionPage() {
-  const params = useParams();
-  const sectionId = params.id as string;
+export default function Page() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center bg-gray-50">
+          <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+        </div>
+      }
+    >
+      <SectionProductionPage />
+    </Suspense>
+  );
+}
+
+function SectionProductionPage() {
+  const searchParams = useSearchParams();
+  const sectionId = searchParams.get("id") ?? "";
 
   const [products, setProducts] = useState<ProductWithStats[]>([]);
   const [loading, setLoading] = useState(true);

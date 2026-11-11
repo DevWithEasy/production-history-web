@@ -8,6 +8,7 @@ import {
   Edit2,
   FileSignature,
   FileText,
+  Loader2,
   Plus,
   Printer,
   Save,
@@ -16,8 +17,8 @@ import {
   Users,
   X,
 } from "lucide-react";
-import { useParams, useRouter } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Suspense, useEffect, useRef, useState } from "react";
 import { useReactToPrint } from "react-to-print";
 
 type Person = {
@@ -38,10 +39,24 @@ type Increament = {
   created_at: any;
 };
 
-export default function Increment() {
-  const params = useParams();
+export default function Page() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center bg-gray-50">
+          <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+        </div>
+      }
+    >
+      <Increment />
+    </Suspense>
+  );
+}
+
+function Increment() {
+  const searchParams = useSearchParams();
   const router = useRouter();
-  const increamentId = params.id as string;
+  const increamentId = searchParams.get("id") ?? "";
   const [increament, setIncreament] = useState<Increament | null>(null);
   const [originalIncreament, setOriginalIncreament] =
     useState<Increament | null>(null);

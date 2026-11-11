@@ -90,7 +90,7 @@ export default function Increments() {
         person: data.person || [],
       });
 
-      router.push(`/app/increaments/${docCreateRef.id}`);
+      router.push(`/app/increaments/view?id=${docCreateRef.id}`);
     } catch (error) {
       console.error("Error creating increment:", error);
       alert("আবেদন তৈরি করতে সমস্যা হয়েছে। আবার চেষ্টা করুন।");
@@ -258,7 +258,7 @@ export default function Increments() {
               {data.map((d) => (
                 <Link
                   key={d.id}
-                  href={`/app/increaments/${d.id}`}
+                  href={`/app/increaments/view?id=${d.id}`}
                   className="block group hover:bg-blue-50 transition-all duration-200"
                 >
                   <div className="px-6 py-5 flex flex-col md:flex-row md:items-center justify-between gap-4">
